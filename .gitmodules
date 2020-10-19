@@ -1,3 +1,6 @@
 [submodule "lib/glitchedhttps"]
 	path = lib/glitchedhttps
 	url = https://github.com/GlitchedPolygons/glitchedhttps
+[submodule "lib/cecies"]
+	path = lib/cecies
+	url = https://github.com/GlitchedPolygons/cecies

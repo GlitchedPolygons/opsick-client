@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(opsick_client C)
 
 set(CMAKE_C_STANDARD 11)
@@ -51,6 +51,10 @@ set(${PROJECT_NAME}_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/src/opsick-client.c
         )
 
+if (NOT TARGET cecies)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/cecies cecies)
+endif ()
+
 if (NOT TARGET glitchedhttps)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/glitchedhttps glitchedhttps)
 endif ()
@@ -64,6 +68,8 @@ if (${${PROJECT_NAME}_BUILD_DLL} OR BUILD_SHARED_LIBS)
     set_property(TARGET mbedtls PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET mbedx509 PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET mbedcrypto PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_property(TARGET cecies PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_property(TARGET glitchedhttps PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             VERSION ${${PROJECT_NAME}_VERSION_STRING}
             SOVERSION ${${PROJECT_NAME}_MAJOR}
@@ -104,12 +110,10 @@ if (${${PROJECT_NAME}_PACKAGE})
 endif ()
 
 target_link_libraries(${PROJECT_NAME}
-        PUBLIC mbedtls
-        PUBLIC mbedx509
-        PUBLIC mbedcrypto
+        PUBLIC cecies
+        PUBLIC glitchedhttps
         )
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${${PROJECT_NAME}_INCLUDE_DIR}
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/glitchedhttps/lib/mbedtls/include
         )

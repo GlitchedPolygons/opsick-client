@@ -31,6 +31,10 @@ extern "C" {
 #define OPSICK_CLIENT_API
 #endif
 
+OPSICK_CLIENT_API int opsick_client_test_connection();
+
+OPSICK_CLIENT_API void opsick_client_change_server(const char* server_url);
+
 OPSICK_CLIENT_API int opsick_client_get_server_public_keys(char out_ed25519_pubkey_hextstr[64 + 1], char out_curve448_pubkey_hextstr[112 + 1]);
 
 OPSICK_CLIENT_API int opsick_client_post_passwd();
