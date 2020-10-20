@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['server_5furl_14',['server_url',['../structopsick__client__user__request__params.html#a51fb4483e0d9cb31bba55ac34608d599',1,'opsick_client_user_request_params']]]
+  ['server_5furl_16',['server_url',['../structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125',1,'opsick_client_user_profile']]]
 ];

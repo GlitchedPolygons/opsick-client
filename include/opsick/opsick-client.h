@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 
 /**
  * @file opsick-client.h
@@ -55,9 +56,9 @@ extern "C" {
 #define OPSICK_CLIENT_VERSION_PATCH 0
 
 /**
- * User request profile containing parameters for requests to the opsick server.
+ * Opsick user profile containing parameters for requests to the opsick server as well as the user's actual data fields.
  */
-struct opsick_client_user_request_params
+struct opsick_client_user_profile
 {
     /**
      * The opsick server base URL, including the protocol (<c>http://</c> or <c>https://</c>). <p>
@@ -90,10 +91,22 @@ struct opsick_client_user_request_params
     char user_private_ed25519_key[128 + 1];
 
     /**
+     * The user's public ed25519 key as a hex-encoded, NUL-terminated string. <p>
+     * This is used by the server to verify this user's requests to it.
+     */
+    char user_public_ed25519_key[64 + 1];
+
+    /**
      * The user's private curve448 key as a hex-encoded, NUL-terminated string. <p>
      * This is used to decrypt server responses (the server encrypts all responses for each user individually using his or her public key).
      */
     char user_private_curve448_key[112 + 1];
+
+    /**
+     * The user's public curve448 key as a hex-encoded, NUL-terminated string. <p>
+     * This is used by the server to encrypt responses for this user.
+     */
+    char user_public_curve448_key[112 + 1];
 };
 
 /**
@@ -107,82 +120,100 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
 
 /**
  * Fetches the currently active server public keys (ed25519 and curve448).
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url
  * @param out_server_ed25519_pubkey_hexstr Where to write the fetched server ed25519 public key into (writable \p char array of at least 65 bytes: 64 characters + 1 NUL-terminator).
  * @param out_server_curve448_pubkey_hexstr Where to write the fetched server curve448 public key into (writable \p char array of at least 113 bytes: 112 characters + 1 NUL-terminator).
  * @return
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_server_public_keys(const struct opsick_client_user_request_params* user_profile, char out_server_ed25519_pubkey_hexstr[64 + 1], char out_server_curve448_pubkey_hexstr[112 + 1]);
+OPSICK_CLIENT_API int opsick_client_get_server_public_keys(const struct opsick_client_user_profile* user_profile, char out_server_ed25519_pubkey_hexstr[64 + 1], char out_server_curve448_pubkey_hexstr[112 + 1]);
 
 /**
  * Submits a password change request to the opsick server.
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * * user_private_ed25519_key: #opsick_client_user_request_params.user_private_ed25519_key
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
  * @param new_pw The new user password.
  * @return
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_passwd(const struct opsick_client_user_request_params* user_profile, const char* new_pw);
+OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_profile* user_profile, const char* new_pw);
 
 /**
  * Fetches a user account from an opsick server:
  * pass your current encrypted body's SHA2-512 (hex-encoded, NUL-terminated string) to prevent unnecessary traffic in case you already have the latest version!
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * * user_private_ed25519_key: #opsick_client_user_request_params.user_private_ed25519_key
- * * user_private_curve448_key: #opsick_client_user_request_params.user_private_curve448_key
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
+ * * user_private_curve448_key: #opsick_client_user_profile.user_private_curve448_key
  * @param body_sha512 The current local machine's body SHA2-512 (of the encrypted body ciphertext).
  * @return
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_user(const struct opsick_client_user_request_params* user_profile, const char* body_sha512); // TODO: decide on output
+OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_profile* user_profile, const char* body_sha512); // TODO: decide on output (write docs! especially the fact that fetched data will be written into \p user_profile!)
 
 /**
  * Fetches a user's public keys and encrypted private keys from the server db.
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * @return
- */
-OPSICK_CLIENT_API int opsick_client_get_userkeys(const struct opsick_client_user_request_params* user_profile); // TODO: decide on output
-
-/**
- * Submits a user deletion request to the opsick server. Careful with this: it's irreversible!
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * * user_private_ed25519_key: #opsick_client_user_request_params.user_private_ed25519_key
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
  * @return
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user_request_params* user_profile);
+OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_profile* user_profile); // TODO: decide on output
+
+/**
+ * Regenerates fresh Ed25519 and Curve448 keypairs for the user and submits them to the opsick backend for immediate replacement.
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
+ * @param additional_entropy [OPTIONAL] Additional entropy to use for key generation. Pass \p NULL if you want to omit this parameter!
+ * @param additional_entropy_length [OPTIONAL] Length of the passed \p additional_entropy buffer (ignored if \p additional_entropy is <c>NULL</c>).
+ * @return
+ * * \p 0 on success <br>
+ * * The returned HTTP status code representing the error in case of a failure.
+ */
+OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_profile* user_profile, const void* additional_entropy, size_t additional_entropy_length);
+
+/**
+ * Submits a user deletion request to the opsick server. Careful with this: it's irreversible!
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
+ * @return
+ * * \p 0 on success <br>
+ * * The returned HTTP status code representing the error in case of a failure.
+ */
+OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user_profile* user_profile);
 
 /**
  * Enable, disable or verify two-factor authentication for an opsick user.
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * * user_private_ed25519_key: #opsick_client_user_request_params.user_private_ed25519_key
- * * user_private_curve448_key: #opsick_client_user_request_params.user_private_curve448_key (if \p action is \p 1).
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
+ * * user_private_curve448_key: #opsick_client_user_profile.user_private_curve448_key (if \p action is \p 1).
  * @param action \p 0 = Disable 2FA <br> \p 1 = Enable 2FA <br> \p 2 = Verify 2FA token
  * @param out_json Where to write any output json into (must be at least 256 bytes of writable \p char buffer). <br>
  * This will only be touched if \p action is \p 1 (it will contain the generated user 2FA secret and other useful metadata to display to the user <strong>ONCE</strong>).
@@ -190,23 +221,23 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user_request_params* user_profile, int action, char out_json[256]);
+OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user_profile* user_profile, int action, char out_json[256]);
 
 /**
  * Submits a new body to the opsick server.
- * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
- * * server_url: #opsick_client_user_request_params.server_url <br>
- * * user_id: #opsick_client_user_request_params.user_id <br>
- * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_request_params.user_pw
- * * user_private_ed25519_key: #opsick_client_user_request_params.user_private_ed25519_key
+ * @param user_profile Required fields inside the #opsick_client_user_profile struct: <br>
+ * * server_url: #opsick_client_user_profile.server_url <br>
+ * * user_id: #opsick_client_user_profile.user_id <br>
+ * * user_totp: #opsick_client_user_profile.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_profile.user_pw
+ * * user_private_ed25519_key: #opsick_client_user_profile.user_private_ed25519_key
  * @param body_json The new body json to encrypt using the user's password and submit to the opsick backend.
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userbody(const struct opsick_client_user_request_params* user_profile, const char* body_json);
+OPSICK_CLIENT_API int opsick_client_post_userbody(const struct opsick_client_user_profile* user_profile, const char* body_json);
 
 /**
  * Fetches the opsick server version information.

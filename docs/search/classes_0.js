@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['opsick_5fclient_5fuser_5frequest_5fparams_20',['opsick_client_user_request_params',['../structopsick__client__user__request__params.html',1,'']]]
+  ['opsick_5fclient_5fuser_5fprofile_24',['opsick_client_user_profile',['../structopsick__client__user__profile.html',1,'']]]
 ];
