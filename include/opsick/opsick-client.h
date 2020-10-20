@@ -147,7 +147,18 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(const struct opsick_client_user_
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_userget(const struct opsick_client_user_request_params* user_profile, const char* body_sha512); // TODO: decide on output
+OPSICK_CLIENT_API int opsick_client_get_user(const struct opsick_client_user_request_params* user_profile, const char* body_sha512); // TODO: decide on output
+
+/**
+ * Fetches a user's public keys and encrypted private keys from the server db.
+ * @param user_profile Required fields inside the #opsick_client_user_request_params struct: <br>
+ * * server_url: #opsick_client_user_request_params.server_url <br>
+ * * user_id: #opsick_client_user_request_params.user_id <br>
+ * * user_totp: #opsick_client_user_request_params.user_totp (if user has 2FA enabled).
+ * * user_pw: #opsick_client_user_request_params.user_pw
+ * @return
+ */
+OPSICK_CLIENT_API int opsick_client_get_userkeys(const struct opsick_client_user_request_params* user_profile); // TODO: decide on output
 
 /**
  * Submits a user deletion request to the opsick server. Careful with this: it's irreversible!
