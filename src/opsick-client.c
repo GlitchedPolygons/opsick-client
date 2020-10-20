@@ -13,3 +13,16 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+#include "../include/opsick/opsick-client.h"
+
+#include <stdio.h>
+
+OPSICK_CLIENT_API int opsick_client_get_client_version(char out_version_string[16])
+{
+    if (out_version_string != NULL)
+    {
+        snprintf(out_version_string, 16, "%d.%d.%d", OPSICK_CLIENT_VERSION_MAJOR, OPSICK_CLIENT_VERSION_MINOR, OPSICK_CLIENT_VERSION_PATCH);
+    }
+    return OPSICK_CLIENT_VERSION_MAJOR;
+}

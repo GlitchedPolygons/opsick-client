@@ -4,3 +4,9 @@
 [submodule "lib/cecies"]
 	path = lib/cecies
 	url = https://github.com/GlitchedPolygons/cecies
+[submodule "lib/pwcrypt"]
+	path = lib/pwcrypt
+	url = https://github.com/GlitchedPolygons/pwcrypt.git
+[submodule "lib/ed25519"]
+	path = lib/ed25519
+	url = https://github.com/GlitchedPolygons/GlitchEd25519.git
