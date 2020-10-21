@@ -93,7 +93,7 @@ Include dependency graph for opsick-client.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
@@ -112,22 +112,22 @@ Macros</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:ae2c7dbc681ed25a9332d496c24128475"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ae2c7dbc681ed25a9332d496c24128475">opsick_client_test_connection</a> (const char *server_url)</td></tr>
 <tr class="separator:ae2c7dbc681ed25a9332d496c24128475"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:affaf79b6d3df95fde8d46b911a111bc9"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#affaf79b6d3df95fde8d46b911a111bc9">opsick_client_get_server_public_keys</a> (const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, char out_server_ed25519_pubkey_hexstr[64+1], char out_server_curve448_pubkey_hexstr[112+1])</td></tr>
-<tr class="separator:affaf79b6d3df95fde8d46b911a111bc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99f2ae3831f03d5994caeb64bf490241"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a99f2ae3831f03d5994caeb64bf490241">opsick_client_post_passwd</a> (struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, const char *new_pw)</td></tr>
-<tr class="separator:a99f2ae3831f03d5994caeb64bf490241"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a02443ae8e0044c6b25e125aebd255dba"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a02443ae8e0044c6b25e125aebd255dba">opsick_client_get_user</a> (struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, const char *body_sha512)</td></tr>
-<tr class="separator:a02443ae8e0044c6b25e125aebd255dba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ae81a941d073f94b4f2957fbcdef3ad"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a0ae81a941d073f94b4f2957fbcdef3ad">opsick_client_get_userkeys</a> (struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile)</td></tr>
-<tr class="separator:a0ae81a941d073f94b4f2957fbcdef3ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1065c38bca5ebc6a285138df434482eb"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a1065c38bca5ebc6a285138df434482eb">opsick_client_regen_userkeys</a> (struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, const void *additional_entropy, size_t additional_entropy_length)</td></tr>
-<tr class="separator:a1065c38bca5ebc6a285138df434482eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac42bac2040ab59151f4efac19e665057"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ac42bac2040ab59151f4efac19e665057">opsick_client_post_userdel</a> (const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile)</td></tr>
-<tr class="separator:ac42bac2040ab59151f4efac19e665057"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b35b8d44b327af119c86cdf07bf2413"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a3b35b8d44b327af119c86cdf07bf2413">opsick_client_post_user2fa</a> (const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, int action, char out_json[256])</td></tr>
-<tr class="separator:a3b35b8d44b327af119c86cdf07bf2413"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94075ba5edd893947abe34adac5b7e82"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a94075ba5edd893947abe34adac5b7e82">opsick_client_post_userbody</a> (const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *user_profile, const char *body_json)</td></tr>
-<tr class="separator:a94075ba5edd893947abe34adac5b7e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4770821328eac914e52f6726789a39dc"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a4770821328eac914e52f6726789a39dc">opsick_client_get_server_public_keys</a> (const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, char out_server_ed25519_pubkey_hexstr[64+1], char out_server_curve448_pubkey_hexstr[112+1])</td></tr>
+<tr class="separator:a4770821328eac914e52f6726789a39dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa54cacd87c7b6bb29cfdee1e46d4db71"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#aa54cacd87c7b6bb29cfdee1e46d4db71">opsick_client_post_passwd</a> (struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, const char *new_pw)</td></tr>
+<tr class="separator:aa54cacd87c7b6bb29cfdee1e46d4db71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab180c7d5907d6342d766a160274f87db"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ab180c7d5907d6342d766a160274f87db">opsick_client_get_user</a> (struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, const char *body_sha512)</td></tr>
+<tr class="separator:ab180c7d5907d6342d766a160274f87db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7fb8937b026addba40bfea6c27d5a1fe"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a7fb8937b026addba40bfea6c27d5a1fe">opsick_client_get_userkeys</a> (struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile)</td></tr>
+<tr class="separator:a7fb8937b026addba40bfea6c27d5a1fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3a4f7bf6256d5eff54e028845e3cfc5"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ab3a4f7bf6256d5eff54e028845e3cfc5">opsick_client_regen_userkeys</a> (struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, const void *additional_entropy, size_t additional_entropy_length)</td></tr>
+<tr class="separator:ab3a4f7bf6256d5eff54e028845e3cfc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf352c56bcfdb90b090cac063ff856ff"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#aaf352c56bcfdb90b090cac063ff856ff">opsick_client_post_userdel</a> (const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile)</td></tr>
+<tr class="separator:aaf352c56bcfdb90b090cac063ff856ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab92784b86ba34252a7a358da7a0e6ede"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ab92784b86ba34252a7a358da7a0e6ede">opsick_client_post_user2fa</a> (const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, int action, char out_json[256])</td></tr>
+<tr class="separator:ab92784b86ba34252a7a358da7a0e6ede"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4c8c3eb2877269fbab69287b6d2341f"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ab4c8c3eb2877269fbab69287b6d2341f">opsick_client_post_userbody</a> (const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *user_profile, const char *body_json)</td></tr>
+<tr class="separator:ab4c8c3eb2877269fbab69287b6d2341f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab00b4fefc84bce80484825647aa04e8c"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ab00b4fefc84bce80484825647aa04e8c">opsick_client_get_server_version</a> (char out_json[128])</td></tr>
 <tr class="separator:ab00b4fefc84bce80484825647aa04e8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80c4a0a86863f26b62a04a9ac67bf063"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a80c4a0a86863f26b62a04a9ac67bf063">opsick_client_get_client_version</a> (char out_version_string[16])</td></tr>
@@ -209,8 +209,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="affaf79b6d3df95fde8d46b911a111bc9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#affaf79b6d3df95fde8d46b911a111bc9">&#9670;&nbsp;</a></span>opsick_client_get_server_public_keys()</h2>
+<a id="a4770821328eac914e52f6726789a39dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4770821328eac914e52f6726789a39dc">&#9670;&nbsp;</a></span>opsick_client_get_server_public_keys()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -218,7 +218,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_get_server_public_keys </td>
           <td>(</td>
-          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -242,9 +242,9 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Fetches the currently active server public keys (ed25519 and curve448). </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> </li>
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">out_server_ed25519_pubkey_hexstr</td><td>Where to write the fetched server ed25519 public key into (writable <code>char</code> array of at least 65 bytes: 64 characters + 1 NUL-terminator). </td></tr>
@@ -291,8 +291,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a02443ae8e0044c6b25e125aebd255dba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a02443ae8e0044c6b25e125aebd255dba">&#9670;&nbsp;</a></span>opsick_client_get_user()</h2>
+<a id="ab180c7d5907d6342d766a160274f87db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab180c7d5907d6342d766a160274f87db">&#9670;&nbsp;</a></span>opsick_client_get_user()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -300,7 +300,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_get_user </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -318,16 +318,16 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Fetches a user account from an opsick server: pass your current encrypted body's SHA2-512 (hex-encoded, NUL-terminated string) to prevent unnecessary traffic in case you already have the latest version! </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a></li>
-<li>user_private_curve448_key: <a class="el" href="structopsick__client__user__profile.html#a09f24b902dc73ecf0e5a861dd9b3c34c">opsick_client_user_profile.user_private_curve448_key</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a></li>
+<li>user_private_curve448_key: <a class="el" href="structopsick__client__user__context.html#a5c87f2948faeb2eea71f4c0315973fcb">opsick_client_user_context.user_private_curve448_key</a> </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">body_sha512</td><td>The current local machine's body SHA2-512 (of the encrypted body ciphertext). </td></tr>
@@ -343,8 +343,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a0ae81a941d073f94b4f2957fbcdef3ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ae81a941d073f94b4f2957fbcdef3ad">&#9670;&nbsp;</a></span>opsick_client_get_userkeys()</h2>
+<a id="a7fb8937b026addba40bfea6c27d5a1fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7fb8937b026addba40bfea6c27d5a1fe">&#9670;&nbsp;</a></span>opsick_client_get_userkeys()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -352,7 +352,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_get_userkeys </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em></td><td>)</td>
           <td></td>
         </tr>
@@ -360,14 +360,14 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Fetches a user's public keys and encrypted private keys from the server db. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a> </li>
 </ul>
 </td></tr>
   </table>
@@ -382,8 +382,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a99f2ae3831f03d5994caeb64bf490241"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a99f2ae3831f03d5994caeb64bf490241">&#9670;&nbsp;</a></span>opsick_client_post_passwd()</h2>
+<a id="aa54cacd87c7b6bb29cfdee1e46d4db71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa54cacd87c7b6bb29cfdee1e46d4db71">&#9670;&nbsp;</a></span>opsick_client_post_passwd()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -391,7 +391,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_post_passwd </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -409,15 +409,15 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Submits a password change request to the opsick server. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a> </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">new_pw</td><td>The new user password. </td></tr>
@@ -433,8 +433,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a3b35b8d44b327af119c86cdf07bf2413"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3b35b8d44b327af119c86cdf07bf2413">&#9670;&nbsp;</a></span>opsick_client_post_user2fa()</h2>
+<a id="ab92784b86ba34252a7a358da7a0e6ede"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab92784b86ba34252a7a358da7a0e6ede">&#9670;&nbsp;</a></span>opsick_client_post_user2fa()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -442,7 +442,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_post_user2fa </td>
           <td>(</td>
-          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -466,16 +466,16 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Enable, disable or verify two-factor authentication for an opsick user. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a></li>
-<li>user_private_curve448_key: <a class="el" href="structopsick__client__user__profile.html#a09f24b902dc73ecf0e5a861dd9b3c34c">opsick_client_user_profile.user_private_curve448_key</a> (if <code>action</code> is <code>1</code>). </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a></li>
+<li>user_private_curve448_key: <a class="el" href="structopsick__client__user__context.html#a5c87f2948faeb2eea71f4c0315973fcb">opsick_client_user_context.user_private_curve448_key</a> (if <code>action</code> is <code>1</code>). </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">action</td><td><code>0</code> = Disable 2FA <br  />
@@ -495,8 +495,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a94075ba5edd893947abe34adac5b7e82"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94075ba5edd893947abe34adac5b7e82">&#9670;&nbsp;</a></span>opsick_client_post_userbody()</h2>
+<a id="ab4c8c3eb2877269fbab69287b6d2341f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4c8c3eb2877269fbab69287b6d2341f">&#9670;&nbsp;</a></span>opsick_client_post_userbody()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -504,7 +504,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_post_userbody </td>
           <td>(</td>
-          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -522,15 +522,15 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Submits a new body to the opsick server. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a> </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">body_json</td><td>The new body json to encrypt using the user's password and submit to the opsick backend. </td></tr>
@@ -548,8 +548,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ac42bac2040ab59151f4efac19e665057"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac42bac2040ab59151f4efac19e665057">&#9670;&nbsp;</a></span>opsick_client_post_userdel()</h2>
+<a id="aaf352c56bcfdb90b090cac063ff856ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf352c56bcfdb90b090cac063ff856ff">&#9670;&nbsp;</a></span>opsick_client_post_userdel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -557,7 +557,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_post_userdel </td>
           <td>(</td>
-          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">const struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em></td><td>)</td>
           <td></td>
         </tr>
@@ -565,15 +565,15 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Submits a user deletion request to the opsick server. Careful with this: it's irreversible! </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a> </li>
 </ul>
 </td></tr>
   </table>
@@ -588,8 +588,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a1065c38bca5ebc6a285138df434482eb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1065c38bca5ebc6a285138df434482eb">&#9670;&nbsp;</a></span>opsick_client_regen_userkeys()</h2>
+<a id="ab3a4f7bf6256d5eff54e028845e3cfc5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3a4f7bf6256d5eff54e028845e3cfc5">&#9670;&nbsp;</a></span>opsick_client_regen_userkeys()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -597,7 +597,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">OPSICK_CLIENT_API int opsick_client_regen_userkeys </td>
           <td>(</td>
-          <td class="paramtype">struct <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> *&#160;</td>
+          <td class="paramtype">struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *&#160;</td>
           <td class="paramname"><em>user_profile</em>, </td>
         </tr>
         <tr>
@@ -621,15 +621,15 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Regenerates fresh Ed25519 and Curve448 keypairs for the user and submits them to the opsick backend for immediate replacement. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__profile.html">opsick_client_user_profile</a> struct: <br  />
+    <tr><td class="paramname">user_profile</td><td>Required fields inside the <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> struct: <br  />
 <ul>
-<li>server_url: <a class="el" href="structopsick__client__user__profile.html#aa6b8d266a8386e4e874fc114939c6125">opsick_client_user_profile.server_url</a> <br  />
+<li>server_url: <a class="el" href="structopsick__client__user__context.html#a68d6c12e035955b85495e6b5706dbff3">opsick_client_user_context.server_url</a> <br  />
 </li>
-<li>user_id: <a class="el" href="structopsick__client__user__profile.html#a097ee31228eccc2cf227eba7920d684f">opsick_client_user_profile.user_id</a> <br  />
+<li>user_id: <a class="el" href="structopsick__client__user__context.html#aba9123307028b0312ffb2a011b4a17ce">opsick_client_user_context.user_id</a> <br  />
 </li>
-<li>user_totp: <a class="el" href="structopsick__client__user__profile.html#a6038ffcd9c5bccda5dad7f87c0c6069d">opsick_client_user_profile.user_totp</a> (if user has 2FA enabled).</li>
-<li>user_pw: <a class="el" href="structopsick__client__user__profile.html#acae57f90e154b1d72b457ea910429ee0">opsick_client_user_profile.user_pw</a></li>
-<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__profile.html#a214fe69378bfc94c160ad614cb6312a4">opsick_client_user_profile.user_private_ed25519_key</a> </li>
+<li>user_totp: <a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">opsick_client_user_context.user_totp</a> (if user has 2FA enabled).</li>
+<li>user_pw: <a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">opsick_client_user_context.user_pw</a></li>
+<li>user_private_ed25519_key: <a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">opsick_client_user_context.user_private_ed25519_key</a> </li>
 </ul>
 </td></tr>
     <tr><td class="paramname">additional_entropy</td><td>[OPTIONAL] Additional entropy to use for key generation. Pass <code>NULL</code> if you want to omit this parameter! </td></tr>
