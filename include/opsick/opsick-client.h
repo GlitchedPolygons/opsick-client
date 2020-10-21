@@ -58,13 +58,25 @@ extern "C" {
 /**
  * Opsick user profile containing parameters for requests to the opsick server as well as the user's actual data fields.
  */
-struct opsick_client_user_profile
+struct opsick_client_user_profile // TODO: RENAME TO opsick_client_user_context
 {
     /**
      * The opsick server base URL, including the protocol (<c>http://</c> or <c>https://</c>). <p>
      * NUL-terminated string.
      */
     char server_url[1024];
+
+    /**
+     * The opsick server's public Ed25519 key as a hex-encoded, NUL-terminated string. <p>
+     * Use this to verify the server's response signatures!
+     */
+    char server_public_ed25519_key[64+1];
+
+    /**
+     * The opsick server's public Curve448 key (hex-encoded, NUL-terminated string). <p>
+     * Encrypt your requests to the server with this key!
+     */
+    char server_public_curve448_key[112+1];
 
     /**
      * User account ID.
