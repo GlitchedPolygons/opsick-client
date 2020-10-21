@@ -94,7 +94,7 @@ struct opsick_client_user_context
     /**
      * User account password.
      */
-    char user_pw[512];
+    char user_pw[1024];
 
     /**
      * The user's private ed25519 key as a hex-encoded, NUL-terminated string. <p>
@@ -132,20 +132,20 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
 
 /**
  * Fetches the currently active server public keys (ed25519 and curve448).
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url
- * @param out_server_ed25519_pubkey_hexstr Where to write the fetched server ed25519 public key into (writable \p char array of at least 65 bytes: 64 characters + 1 NUL-terminator).
- * @param out_server_curve448_pubkey_hexstr Where to write the fetched server curve448 public key into (writable \p char array of at least 113 bytes: 112 characters + 1 NUL-terminator).
  * @return
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_server_public_keys(const struct opsick_client_user_context* user_profile, char out_server_ed25519_pubkey_hexstr[64 + 1], char out_server_curve448_pubkey_hexstr[112 + 1]);
+OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx);
 
 /**
  * Submits a password change request to the opsick server.
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -155,13 +155,15 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(const struct opsick_c
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_context* user_profile, const char* new_pw);
+OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw);
 
 /**
  * Fetches a user account from an opsick server:
  * pass your current encrypted body's SHA2-512 (hex-encoded, NUL-terminated string) to prevent unnecessary traffic in case you already have the latest version!
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -172,12 +174,14 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* user_profile, const char* body_sha512); // TODO: decide on output (write docs! especially the fact that fetched data will be written into \p user_profile!)
+OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512); // TODO: decide on output (write docs! especially the fact that fetched data will be written into \p ctx!)
 
 /**
  * Fetches a user's public keys and encrypted private keys from the server db.
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -185,12 +189,14 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_context* user_profile); // TODO: decide on output
+OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_context* ctx);
 
 /**
  * Regenerates fresh Ed25519 and Curve448 keypairs for the user and submits them to the opsick backend for immediate replacement.
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -201,12 +207,14 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_context* user_profile, const void* additional_entropy, size_t additional_entropy_length);
+OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length);
 
 /**
  * Submits a user deletion request to the opsick server. Careful with this: it's irreversible!
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -215,12 +223,14 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user_context* user_profile);
+OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user_context* ctx);
 
 /**
  * Enable, disable or verify two-factor authentication for an opsick user.
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -233,12 +243,14 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user
  * * \p 0 on success <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user_context* user_profile, int action, char out_json[256]);
+OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user_context* ctx, int action, char out_json[256]);
 
 /**
  * Submits a new body to the opsick server.
- * @param user_profile Required fields inside the #opsick_client_user_context struct: <br>
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url <br>
+ * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
+ * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
  * * user_id: #opsick_client_user_context.user_id <br>
  * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
  * * user_pw: #opsick_client_user_context.user_pw
@@ -249,7 +261,7 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user
  * * \p 1 if encryption failed <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userbody(const struct opsick_client_user_context* user_profile, const char* body_json);
+OPSICK_CLIENT_API int opsick_client_post_userbody(const struct opsick_client_user_context* ctx, const char* body_json);
 
 /**
  * Fetches the opsick server version information.
