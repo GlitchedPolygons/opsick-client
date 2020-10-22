@@ -1,10 +1,10 @@
 var indexSectionsWithContent =
 {
-  0: "osu",
+  0: "losu",
   1: "o",
   2: "o",
   3: "o",
-  4: "su",
+  4: "lsu",
   5: "o"
 };
 

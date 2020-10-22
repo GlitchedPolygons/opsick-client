@@ -83,8 +83,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:aba9123307028b0312ffb2a011b4a17ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b8e3aa60978c6980fc98758a137568"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#af0b8e3aa60978c6980fc98758a137568">user_totp</a> [6+1]</td></tr>
 <tr class="separator:af0b8e3aa60978c6980fc98758a137568"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace18844b160e3bbd8f7be1cb31c4a9d7"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#ace18844b160e3bbd8f7be1cb31c4a9d7">user_pw</a> [512]</td></tr>
-<tr class="separator:ace18844b160e3bbd8f7be1cb31c4a9d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0dfb291e2fa99cd32fc5fc501853639"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#af0dfb291e2fa99cd32fc5fc501853639">user_pw</a> [1024]</td></tr>
+<tr class="separator:af0dfb291e2fa99cd32fc5fc501853639"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a259064758d41fc6323ed86ce0fd47385"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#a259064758d41fc6323ed86ce0fd47385">user_private_ed25519_key</a> [128+1]</td></tr>
 <tr class="separator:a259064758d41fc6323ed86ce0fd47385"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a37a5577179583f305721e50ec23577"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#a0a37a5577179583f305721e50ec23577">user_public_ed25519_key</a> [64+1]</td></tr>
@@ -93,10 +93,27 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a5c87f2948faeb2eea71f4c0315973fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68ca19688b9d91bd6bd98da0eb841d6e"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#a68ca19688b9d91bd6bd98da0eb841d6e">user_public_curve448_key</a> [112+1]</td></tr>
 <tr class="separator:a68ca19688b9d91bd6bd98da0eb841d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47cf22fac234c9c2c4041032e5c99e83"><td class="memItemLeft" align="right" valign="top">time_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structopsick__client__user__context.html#a47cf22fac234c9c2c4041032e5c99e83">last_server_key_refresh</a></td></tr>
+<tr class="separator:a47cf22fac234c9c2c4041032e5c99e83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Opsick user profile containing parameters for requests to the opsick server as well as the user's actual data fields. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a47cf22fac234c9c2c4041032e5c99e83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47cf22fac234c9c2c4041032e5c99e83">&#9670;&nbsp;</a></span>last_server_key_refresh</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">time_t opsick_client_user_context::last_server_key_refresh</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Unix timestamp of the last key refresh for this user context. </p>
+
+</div>
+</div>
 <a id="a853e6bdc4ea68ed388a1c6ccb7dcc5b6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a853e6bdc4ea68ed388a1c6ccb7dcc5b6">&#9670;&nbsp;</a></span>server_public_curve448_key</h2>
 
@@ -224,14 +241,14 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ace18844b160e3bbd8f7be1cb31c4a9d7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ace18844b160e3bbd8f7be1cb31c4a9d7">&#9670;&nbsp;</a></span>user_pw</h2>
+<a id="af0dfb291e2fa99cd32fc5fc501853639"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0dfb291e2fa99cd32fc5fc501853639">&#9670;&nbsp;</a></span>user_pw</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">char opsick_client_user_context::user_pw[512]</td>
+          <td class="memname">char opsick_client_user_context::user_pw[1024]</td>
         </tr>
       </table>
 </div><div class="memdoc">
