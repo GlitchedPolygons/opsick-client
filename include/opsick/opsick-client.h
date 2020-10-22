@@ -31,6 +31,7 @@ extern "C" {
 #define OPSICK_CLIENT_API
 #endif
 
+#include <time.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -119,6 +120,11 @@ struct opsick_client_user_context
      * This is used by the server to encrypt responses for this user.
      */
     char user_public_curve448_key[112 + 1];
+
+    /**
+     * Unix timestamp of the last key refresh for this user context.
+     */
+    time_t last_server_key_refresh;
 };
 
 /**
@@ -126,7 +132,9 @@ struct opsick_client_user_context
  * @param server_url The opsick server base URL.
  * @return
  * * \p 0 on success <br>
- * * \p -1 if connection couldn't be established successfully.
+ * * \p -1 in case of an invalid \p server_url (these require explicit \p http:// or \p https:// protocol prefix and <strong>NO trailing slashes</strong>!) <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -3 if the connection was OK but the server doesn't seem to be an opsick server...
  */
 OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
 
@@ -136,6 +144,8 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
  * * server_url: #opsick_client_user_context.server_url
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx);
@@ -153,6 +163,8 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_
  * @param new_pw The new user password.
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw);
@@ -170,11 +182,14 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * * user_private_curve448_key: #opsick_client_user_context.user_private_curve448_key
  * @param body_sha512 The current local machine's body SHA2-512 (of the encrypted body ciphertext).
+ * @param out_body_json Output string where the downloaded user body will be written into (this will be allocated if there was a newer body upstream, or set to \p NULL if the local one is already the most recent one).
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512); // TODO: decide on output (write docs! especially the fact that fetched data will be written into \p ctx!)
+OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json);
 
 /**
  * Fetches a user's public keys and encrypted private keys from the server db.
@@ -187,6 +202,8 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * user_pw: #opsick_client_user_context.user_pw
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_context* ctx);
@@ -205,6 +222,8 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * @param additional_entropy_length [OPTIONAL] Length of the passed \p additional_entropy buffer (ignored if \p additional_entropy is <c>NULL</c>).
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length);
@@ -221,9 +240,11 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user_context* ctx);
+OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_context* ctx);
 
 /**
  * Enable, disable or verify two-factor authentication for an opsick user.
@@ -241,9 +262,11 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(const struct opsick_client_user
  * This will only be touched if \p action is \p 1 (it will contain the generated user 2FA secret and other useful metadata to display to the user <strong>ONCE</strong>).
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user_context* ctx, int action, char out_json[256]);
+OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256]);
 
 /**
  * Submits a new body to the opsick server.
@@ -259,18 +282,24 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(const struct opsick_client_user
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_post_userbody(const struct opsick_client_user_context* ctx, const char* body_json);
+OPSICK_CLIENT_API int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json);
 
 /**
  * Fetches the opsick server version information.
+ * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
+ * * server_url: #opsick_client_user_context.server_url <br>
  * @param out_json Where to write the fetched server version metadata json into (must be at least 128 bytes of writable \p char buffer).
  * @return
  * * \p 0 on success <br>
+ * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
+ * * \p -2 if connection couldn't be established successfully. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_server_version(char out_json[128]);
+OPSICK_CLIENT_API int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128]);
 
 /**
  * Gets the version number of the opsick client library currently in use.
