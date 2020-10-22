@@ -15,6 +15,7 @@
 */
 
 #include "../include/opsick/opsick-client.h"
+#include "../lib/jsmn/jsmn.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -45,6 +46,11 @@ static inline int refresh_server_keys(struct opsick_client_user_context* ctx, co
         return opsick_client_get_server_public_keys(ctx);
     }
     return -1;
+}
+
+static inline int jsoneq(const char* json, const jsmntok_t* tok, const char* s)
+{
+    return tok->type != JSMN_STRING || (int)strlen(s) != tok->end - tok->start || strncmp(json + tok->start, s, tok->end - tok->start) != 0;
 }
 
 int opsick_client_test_connection(const char* server_url)
@@ -99,6 +105,9 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
         return -1;
     }
 
+    jsmn_parser parser;
+    jsmntok_t tokens[8] = { 0x00 };
+
     char url[2048] = { 0x00 };
     snprintf(url, sizeof(url), "%s/pubkey", ctx->server_url);
 
@@ -122,12 +131,53 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
         goto exit;
     }
 
-    // TODO: parse json here
+    jsmn_init(&parser);
+    r = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
+
+    if (r < 1 || tokens[0].type != JSMN_OBJECT)
+    {
+        r = -3;
+        goto exit;
+    }
+
+    for (int i = 1; i < r; ++i)
+    {
+        if (jsoneq(response->content, &tokens[i], "public_key_ed25519") == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            const int len = t.end - t.start;
+            if (len != 64) // Ensure valid Ed25519 key length!
+            {
+                r = -3;
+                goto exit;
+            }
+            memcpy(ctx->server_public_ed25519_key, response->content + t.start, len);
+            ctx->server_public_ed25519_key[64] = '\0';
+            continue;
+        }
+
+        if (jsoneq(response->content, &tokens[i], "public_key_curve448"))
+        {
+            jsmntok_t t = tokens[i + 1];
+            const int len = t.end - t.start;
+            if (len != 112) // Ensure valid Curve448 key length!
+            {
+                r = -3;
+                goto exit;
+            }
+            memcpy(ctx->server_public_curve448_key, response->content + t.start, len);
+            ctx->server_public_curve448_key[112] = '\0';
+            continue;
+        }
+    }
 
     ctx->last_server_key_refresh = time(0);
+    r = 0;
 
 exit:
     mbedtls_platform_zeroize(&request, sizeof(struct glitchedhttps_request));
+    mbedtls_platform_zeroize(&parser, sizeof(parser));
+    mbedtls_platform_zeroize(tokens, sizeof(tokens));
     glitchedhttps_response_free(response);
     return r;
 }

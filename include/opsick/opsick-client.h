@@ -146,6 +146,7 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -3 if the returned response couldn't be parsed and/or contains invalid data. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx);

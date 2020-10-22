@@ -10,3 +10,6 @@
 [submodule "lib/ed25519"]
 	path = lib/ed25519
 	url = https://github.com/GlitchedPolygons/GlitchEd25519.git
+[submodule "lib/jsmn"]
+	path = lib/jsmn
+	url = https://github.com/zserge/jsmn
