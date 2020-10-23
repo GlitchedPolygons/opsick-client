@@ -148,6 +148,7 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -3 if the returned response couldn't be parsed and/or contains invalid data. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx);
@@ -167,6 +168,7 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw);
@@ -189,6 +191,7 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json);
@@ -206,6 +209,7 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_context* ctx);
@@ -226,6 +230,7 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length);
@@ -244,6 +249,7 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_context* ctx);
@@ -266,6 +272,7 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_conte
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256]);
@@ -286,6 +293,7 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_conte
  * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json);
@@ -299,6 +307,7 @@ OPSICK_CLIENT_API int opsick_client_post_userbody(struct opsick_client_user_cont
  * * \p 0 on success <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
 OPSICK_CLIENT_API int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128]);

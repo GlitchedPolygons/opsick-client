@@ -30,9 +30,10 @@
 #include <mbedtls/platform_util.h>
 
 #define OPSICK_SERVER_KEY_REFRESH_INTERVAL_S 3600
-#define OPSICK_CLIENT_KEY_ARGON2_T 16
+#define OPSICK_CLIENT_KEY_ARGON2_T 64
 #define OPSICK_CLIENT_KEY_ARGON2_M 65536
 #define OPSICK_CLIENT_KEY_ARGON2_P 2
+#define OPSICK_CLIENT_MAX_URL_LENGTH 1024
 
 static inline int is_valid_server_url(const char* server_url, size_t* out_server_url_length)
 {
@@ -132,21 +133,26 @@ static inline void sha512(const char* pw, const size_t pwlen, char out[128 + 1])
 
 int opsick_client_test_connection(const char* server_url)
 {
+    int r = -1;
+
+    const char* path = "/pubkey";
+    const size_t path_length = strlen(path);
+
     size_t server_url_length;
-    if (!is_valid_server_url(server_url, &server_url_length))
+    if (!is_valid_server_url(server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
-        return -1;
+        return r;
     }
 
-    char url[2048] = { 0x00 };
-    snprintf(url, sizeof(url), "%s/pubkey", server_url);
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", server_url, path);
 
     struct glitchedhttps_request request = { 0x00 };
     request.url = url;
     request.method = GLITCHEDHTTPS_GET;
 
     struct glitchedhttps_response* response = NULL;
-    int r = glitchedhttps_submit(&request, &response);
+    r = glitchedhttps_submit(&request, &response);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -176,25 +182,30 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 {
     assert(ctx != NULL);
 
+    int r = -1;
+
+    const char* path = "/pubkey";
+    const size_t path_length = strlen(path);
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length))
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
-        return -1;
+        return r;
     }
 
     jsmn_parser parser;
     jsmntok_t tokens[8] = { 0x00 };
 
-    char url[2048] = { 0x00 };
-    snprintf(url, sizeof(url), "%s/pubkey", ctx->server_url);
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
     struct glitchedhttps_request request = { 0x00 };
     request.url = url;
-    request.url_length = server_url_length + 7;
+    request.url_length = server_url_length + path_length;
     request.method = GLITCHEDHTTPS_GET;
 
     struct glitchedhttps_response* response = NULL;
-    int r = glitchedhttps_submit(&request, &response);
+    r = glitchedhttps_submit(&request, &response);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -249,6 +260,9 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
     }
 
     ctx->last_server_key_refresh = time(0);
+
+    // TODO: verify server signature of response here
+
     r = 0;
 
 exit:
@@ -264,9 +278,14 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     assert(ctx != NULL);
 
     int r = -1;
+
+    const char* path = "/users/passwd";
+    const size_t path_length = strlen(path);
+
     size_t new_pw_length;
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || !ctx->last_server_key_refresh || new_pw == NULL || (new_pw_length = strlen(new_pw)) == 0 || !has_private_keys(ctx))
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || new_pw == NULL || (new_pw_length = strlen(new_pw)) == 0 || !has_private_keys(ctx) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -285,7 +304,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     char new_pw_sha512[128 + 1];
     sha512(new_pw, new_pw_length, new_pw_sha512);
 
-    char url[2048] = { 0x00 };
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     char json[2048] = { 0x00 };
     char sig[128 + 1] = { 0x00 };
     unsigned char enc_json[4096] = { 0x00 };
@@ -307,7 +326,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
         goto exit;
     }
 
-    snprintf(url, sizeof(url), "%s/users/passwd", ctx->server_url);
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
     snprintf(json, sizeof(json), "{\"user_id\":%zu,\"pw\":\"%s\",\"new_pw\":\"%s\",\"encrypted_private_key_ed25519\":\"%s\",\"encrypted_private_key_curve448\":\"%s\",\"totp\":\"%s\"}", ctx->user_id, pw_sha512, new_pw_sha512, enc_ed25519, enc_curve448, has_totp_set(ctx) ? ctx->user_totp : "");
 
     size_t enc_json_len = 0;
@@ -322,7 +341,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     sign(ctx, (const char*)enc_json, enc_json_len, sig);
 
     request.url = url;
-    request.url_length = server_url_length + 13;
+    request.url_length = server_url_length + path_length;
     request.method = GLITCHEDHTTPS_POST;
 
     struct glitchedhttps_header additional_headers[] = {
@@ -348,6 +367,8 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
 
     mbedtls_platform_zeroize(ctx->user_pw, sizeof(ctx->user_pw));
     memcpy(ctx->user_pw, new_pw, new_pw_length);
+
+    // TODO: verify server signature of response here
 
     r = 0;
 exit:
@@ -378,10 +399,11 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 {
     assert(ctx != NULL);
 
+    int r = -1;
     size_t server_url_length;
     if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL)
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
@@ -391,10 +413,11 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
 {
     assert(ctx != NULL);
 
+    int r = -1;
     size_t server_url_length;
     if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
@@ -404,10 +427,11 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 {
     assert(ctx != NULL);
 
+    int r = -1;
     size_t server_url_length;
     if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL))
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
@@ -417,10 +441,11 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
 {
     assert(ctx != NULL);
 
+    int r = -1;
     size_t server_url_length;
     if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
@@ -430,10 +455,11 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
 {
     assert(ctx != NULL);
 
+    int r = -1;
     size_t server_url_length;
     if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL))
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
@@ -443,34 +469,125 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 {
     assert(ctx != NULL);
 
-    size_t server_url_length;
+    int r = -1;
+
     size_t body_json_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || body_json == NULL || (body_json_length = strlen(body_json)) == 0)
+    size_t server_url_length;
+
+    const char* path = "/users/body";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || body_json == NULL || (body_json_length = strlen(body_json)) == 0 || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
-        return -1;
+        return r;
     }
 
     refresh_server_keys(ctx, 0);
+
+    uint8_t* enc_ed25519 = NULL;
+    size_t enc_ed25519_len = 0;
+
+    uint8_t* enc_curve448 = NULL;
+    size_t enc_curve448_len = 0;
+
+    char pw_sha512[128 + 1];
+    sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
+
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    char sig[128 + 1] = { 0x00 };
+
+    struct glitchedhttps_request request = { 0x00 };
+    struct glitchedhttps_response* response = NULL;
+
+    uint8_t* enc_body_json = NULL;
+    size_t enc_body_json_len = 0;
+
+    char* enc_json = NULL;
+    size_t enc_json_len = 0;
+
+    r = pwcrypt_encrypt((const uint8_t*)body_json, body_json_length, 8, (const uint8_t*)ctx->user_pw, strlen(ctx->user_pw), OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &enc_body_json, &enc_body_json_len, 1);
+    if (r != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
+    request.url = url;
+    request.url_length = server_url_length + path_length;
+    request.method = GLITCHEDHTTPS_POST;
+
+    // TODO: fill headers and create body json here, and encrypt body json with curve448
+
+    r = glitchedhttps_submit(&request, &response);
+
+    if (r != GLITCHEDHTTPS_SUCCESS)
+    {
+        r = -2;
+        goto exit;
+    }
+
+    if (!is_successful(response))
+    {
+        r = response->status_code;
+        goto exit;
+    }
+
+    // TODO: verify server signature of response here
+
+    r = 0;
+exit:
+    if (enc_ed25519)
+    {
+        mbedtls_platform_zeroize(enc_ed25519, enc_ed25519_len);
+        free(enc_ed25519);
+    }
+    if (enc_curve448)
+    {
+        mbedtls_platform_zeroize(enc_curve448, enc_curve448_len);
+        free(enc_curve448);
+    }
+    if (enc_body_json)
+    {
+        mbedtls_platform_zeroize(enc_body_json, enc_body_json_len);
+        free(enc_body_json);
+    }
+    if (enc_json)
+    {
+        mbedtls_platform_zeroize(enc_json, enc_json_len);
+        free(enc_json);
+    }
+    mbedtls_platform_zeroize(url, sizeof(url));
+    mbedtls_platform_zeroize(sig, sizeof(sig));
+    mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
+    mbedtls_platform_zeroize(&request, sizeof(request));
+    glitchedhttps_response_free(response);
+    return r;
 }
 
 int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128])
 {
     assert(ctx != NULL);
 
+    const char* path = "/version";
+    const size_t path_length = strlen(path);
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length))
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return -1;
     }
 
     refresh_server_keys(ctx, 0);
 
-    char url[2048] = { 0x00 };
-    snprintf(url, sizeof(url), "%s/version", ctx->server_url);
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
     struct glitchedhttps_request request = { 0x00 };
     request.url = url;
-    request.url_length = server_url_length + 8;
+    request.url_length = server_url_length + path_length;
     request.method = GLITCHEDHTTPS_GET;
 
     struct glitchedhttps_response* response = NULL;
@@ -489,10 +606,14 @@ int opsick_client_get_server_version(struct opsick_client_user_context* ctx, cha
     }
 
     snprintf(out_json, 128, "%s", response->content);
+
+    // TODO: verify server signature of response here
+
     r = 0;
 
 exit:
     mbedtls_platform_zeroize(&request, sizeof(struct glitchedhttps_request));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
     glitchedhttps_response_free(response);
     return r;
 }
