@@ -166,6 +166,7 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_
  * @param new_pw The new user password.
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -189,6 +190,8 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * @param out_body_json Output string where the downloaded user body will be written into (this will be allocated if there was a newer body upstream, or set to \p NULL if the local one is already the most recent one).
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
+ * * \p 2 if decryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -207,6 +210,8 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * user_pw: #opsick_client_user_context.user_pw
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
+ * * \p 2 if decryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -228,6 +233,7 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * @param additional_entropy_length [OPTIONAL] Length of the passed \p additional_entropy buffer (ignored if \p additional_entropy is <c>NULL</c>).
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -247,6 +253,7 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -270,6 +277,7 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_conte
  * This will only be touched if \p action is \p 1 (it will contain the generated user 2FA secret and other useful metadata to display to the user <strong>ONCE</strong>).
  * @return
  * * \p 0 on success <br>
+ * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -291,6 +299,7 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_conte
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
+ * * \p 20 if out of memory (uh oh...) <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>

@@ -357,14 +357,14 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     r = pwcrypt_encrypt((const uint8_t*)ctx->user_private_ed25519_key, 128, 8, (const uint8_t*)new_pw, new_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1);
     if (r != 0)
     {
-        r = -1;
+        r = 1;
         goto exit;
     }
 
     r = pwcrypt_encrypt((const uint8_t*)ctx->user_private_curve448_key, 112, 8, (const uint8_t*)new_pw, new_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_curve448_private_key, &encrypted_curve448_private_key_length, 1);
     if (r != 0)
     {
-        r = -1;
+        r = 1;
         goto exit;
     }
 
@@ -376,7 +376,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     r = cecies_curve448_encrypt((const unsigned char*)request_body_json, strlen(request_body_json), string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, sizeof(encrypted_request_body_json), &encrypted_request_body_json_length, 1);
     if (r != 0)
     {
-        r = -1;
+        r = 1;
         goto exit;
     }
 
@@ -534,6 +534,8 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
     char sig[128 + 1] = { 0x00 };
 
     struct glitchedhttps_request request = { 0x00 };
@@ -545,7 +547,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     char* request_body_json = NULL;
     size_t request_body_json_length = 0;
 
-    uint8_t* encrypted_request_body_json = NULL;
+    unsigned char* encrypted_request_body_json = NULL;
     size_t encrypted_request_body_json_length = 0;
 
     r = pwcrypt_encrypt((const uint8_t*)body_json, body_json_length, 8, (const uint8_t*)ctx->user_pw, strlen(ctx->user_pw), OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_body_json, &encrypted_body_json_length, 1);
@@ -555,13 +557,24 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
         goto exit;
     }
 
-    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
-    // TODO: create body here
+    request_body_json_length = 1024 + encrypted_body_json_length;
+    request_body_json = malloc(request_body_json_length);
+
+    encrypted_request_body_json_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(request_body_json_length));
+    encrypted_request_body_json = malloc(encrypted_request_body_json_length);
+
+    if (request_body_json == NULL || encrypted_request_body_json == NULL)
+    {
+        r = 20;
+        goto exit;
+    }
+
+    snprintf(request_body_json, request_body_json_length, "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"body\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", encrypted_body_json);
 
     r = cecies_curve448_encrypt((const unsigned char*)request_body_json, request_body_json_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, encrypted_request_body_json_length, &encrypted_request_body_json_length, 1);
     if (r != 0)
     {
-        r = -1;
+        r = 1;
         goto exit;
     }
 
@@ -570,15 +583,17 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     request.url = url;
     request.url_length = server_url_length + path_length;
     request.method = GLITCHEDHTTPS_POST;
+    request.content = (char*)encrypted_request_body_json;
+    request.content_length = encrypted_request_body_json_length;
+    request.content_type = "text/plain";
+    request.content_type_length = 10;
 
     struct glitchedhttps_header additional_headers[] = {
         { "ed25519-signature", sig },
     };
 
-    request.additional_headers = additional_headers;
     request.additional_headers_count = 1;
-
-    // TODO: fill headers and create body json here, and encrypt body json with curve448
+    request.additional_headers = additional_headers;
 
     r = glitchedhttps_submit(&request, &response);
 
