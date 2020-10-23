@@ -446,8 +446,13 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     assert(ctx != NULL);
 
     int r = -1;
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL)
+
+    const char* path = "/users";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -460,8 +465,13 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
     assert(ctx != NULL);
 
     int r = -1;
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length))
+
+    const char* path = "/users/keys";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -474,8 +484,13 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
     assert(ctx != NULL);
 
     int r = -1;
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL))
+
+    const char* path = "/users/keys/update";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -488,8 +503,13 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
     assert(ctx != NULL);
 
     int r = -1;
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length))
+
+    const char* path = "/users/delete";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -502,8 +522,13 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
     assert(ctx != NULL);
 
     int r = -1;
+
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL))
+
+    const char* path = "/users/2fa";
+    const size_t path_length = strlen(path);
+
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -646,6 +671,7 @@ int opsick_client_get_server_version(struct opsick_client_user_context* ctx, cha
     assert(ctx != NULL);
 
     int r = -1;
+
     const char* path = "/version";
     const size_t path_length = strlen(path);
 
