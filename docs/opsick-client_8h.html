@@ -360,6 +360,12 @@ Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
 </li>
+<li><code>1</code> if encryption failed <br  />
+</li>
+<li><code>2</code> if decryption failed <br  />
+</li>
+<li><code>20</code> if out of memory (uh oh...) <br  />
+</li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
 <li><code>-2</code> if connection couldn't be established successfully. <br  />
@@ -406,6 +412,10 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
+</li>
+<li><code>1</code> if encryption failed <br  />
+</li>
+<li><code>2</code> if decryption failed <br  />
 </li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
@@ -465,6 +475,8 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
+</li>
+<li><code>1</code> if encryption failed <br  />
 </li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
@@ -536,6 +548,8 @@ Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
 </li>
+<li><code>1</code> if encryption failed <br  />
+</li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
 <li><code>-2</code> if connection couldn't be established successfully. <br  />
@@ -597,6 +611,8 @@ Functions</h2></td></tr>
 </li>
 <li><code>1</code> if encryption failed <br  />
 </li>
+<li><code>20</code> if out of memory (uh oh...) <br  />
+</li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
 <li><code>-2</code> if connection couldn't be established successfully. <br  />
@@ -644,6 +660,8 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
+</li>
+<li><code>1</code> if encryption failed <br  />
 </li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>
@@ -710,6 +728,8 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><ul>
 <li><code>0</code> on success <br  />
+</li>
+<li><code>1</code> if encryption failed <br  />
 </li>
 <li><code>-1</code> if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br  />
 </li>

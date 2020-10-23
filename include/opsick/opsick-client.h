@@ -192,6 +192,7 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
  * * \p 2 if decryption failed <br>
+ * * \p 20 if out of memory (uh oh...) <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
