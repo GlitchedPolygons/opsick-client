@@ -88,7 +88,8 @@ struct opsick_client_user_context
      * TOTP (2FA token) - if applicable.    <p>
      * NUL-terminated string.               <p>
      * Typically, this will be a NUL-terminated 6-digits string. <p>
-     * Fill this with \p 0x00 if you wish to omit this parameter!
+     * Fill this with \p 0x00 if you wish to omit this parameter! <p>
+     * This will be reset by all endpoint request functions on exit, even in case of failure!
      */
     char user_totp[6 + 1];
 
