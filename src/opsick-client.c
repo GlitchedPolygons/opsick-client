@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <glitchedhttps.h>
+#include <glitchedhttps_strutil.h>
 #include <mbedtls/sha512.h>
 #include <mbedtls/platform_util.h>
 
@@ -34,6 +35,8 @@
 #define OPSICK_CLIENT_KEY_ARGON2_M 65536
 #define OPSICK_CLIENT_KEY_ARGON2_P 2
 #define OPSICK_CLIENT_MAX_URL_LENGTH 1024
+
+const static unsigned char Z256[256] = { 0x00 };
 
 static inline int is_valid_server_url(const char* server_url, size_t* out_server_url_length)
 {
@@ -100,6 +103,40 @@ static inline void sign(const struct opsick_client_user_context* ctx, const char
     mbedtls_platform_zeroize(prv, sizeof(prv));
     mbedtls_platform_zeroize(pub, sizeof(pub));
     mbedtls_platform_zeroize(sig, sizeof(sig));
+}
+
+static int is_valid_server_sig(const struct opsick_client_user_context* ctx, const char* msg, const size_t msg_len, struct glitchedhttps_response* response)
+{
+    char sig_hex[128 + 1] = { 0x00 };
+
+    for (size_t i = 0; i < response->headers_count; ++i)
+    {
+        struct glitchedhttps_header h = response->headers[i];
+        if (glitchedhttps_strncmpic(h.type, "ed25519-signature", 17) == 0)
+        {
+            snprintf(sig_hex, sizeof(sig_hex), "%s", h.value);
+            break;
+        }
+    }
+
+    if (memcmp(sig_hex, Z256, sizeof(sig_hex)) == 0)
+    {
+        return 0;
+    }
+
+    unsigned char sig[64 + 1];
+    if (cecies_hexstr2bin(sig_hex, 128, sig, sizeof(sig), NULL) != 0)
+    {
+        return 0;
+    }
+
+    unsigned char pubkey[32 + 1];
+    if (cecies_hexstr2bin(ctx->server_public_ed25519_key, 64, pubkey, sizeof(pubkey), NULL) != 0)
+    {
+        return 0;
+    }
+
+    return ed25519_verify(sig, (const unsigned char*)msg, msg_len, pubkey);
 }
 
 static inline cecies_curve448_key string2curve448key(const char* key_hexstr)
@@ -261,7 +298,11 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 
     ctx->last_server_key_refresh = time(0);
 
-    // TODO: verify server signature of response here
+    if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
+    {
+        r = -10;
+        goto exit;
+    }
 
     r = 0;
 
