@@ -387,8 +387,6 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
-
     uint8_t* encrypted_ed25519_private_key = NULL;
     size_t encrypted_ed25519_private_key_length = 0;
 
@@ -402,12 +400,9 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     sha512(new_pw, new_pw_length, new_pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
     char request_body_json[2048] = { 0x00 };
-    char sig[128 + 1] = { 0x00 };
-
-    unsigned char encrypted_request_body_json[4096] = { 0x00 };
-
-    struct glitchedhttps_request request = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
     r = pwcrypt_encrypt((const uint8_t*)ctx->user_private_ed25519_key, 128, 8, (const uint8_t*)new_pw, new_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1);
@@ -424,32 +419,9 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
         goto exit;
     }
 
-    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
     snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"new_pw\":\"%s\",\"encrypted_private_key_ed25519\":\"%s\",\"encrypted_private_key_curve448\":\"%s\",\"totp\":\"%s\"}", ctx->user_id, pw_sha512, new_pw_sha512, encrypted_ed25519_private_key, encrypted_curve448_private_key, has_totp_set(ctx) ? ctx->user_totp : "");
 
-    size_t encrypted_request_body_json_length = 0;
-
-    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, strlen(request_body_json), string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, sizeof(encrypted_request_body_json), &encrypted_request_body_json_length, 1);
-    if (r != 0)
-    {
-        r = 1;
-        goto exit;
-    }
-
-    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
-
-    request.url = url;
-    request.url_length = server_url_length + path_length;
-    request.method = GLITCHEDHTTPS_POST;
-
-    struct glitchedhttps_header additional_headers[] = {
-        { "ed25519-signature", sig },
-    };
-
-    request.additional_headers = additional_headers;
-    request.additional_headers_count = 1;
-
-    r = glitchedhttps_submit(&request, &response);
+    r = encrypt_sign_and_post(ctx, request_body_json, strlen(request_body_json), &response, url, server_url_length + path_length);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -459,7 +431,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
 
     if (!is_successful(response))
     {
-        r = response->status_code;
+        r = response ? response->status_code : -2;
         goto exit;
     }
 
@@ -486,13 +458,10 @@ exit:
     }
 
     mbedtls_platform_zeroize(url, sizeof(url));
-    mbedtls_platform_zeroize(sig, sizeof(sig));
     mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
     mbedtls_platform_zeroize(new_pw_sha512, sizeof(new_pw_sha512));
     mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
-    mbedtls_platform_zeroize(&request, sizeof(request));
     mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
-    mbedtls_platform_zeroize(encrypted_request_body_json, sizeof(encrypted_request_body_json));
     glitchedhttps_response_free(response);
     return r;
 }
@@ -513,61 +482,27 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
-
     char pw_sha512[128 + 1] = { 0x00 };
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
-    char sig[128 + 1] = { 0x00 };
-
-    struct glitchedhttps_request request = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
     size_t request_body_json_length = 0;
     char request_body_json[512] = { 0x00 };
 
-    size_t encrypted_request_body_json_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(sizeof(request_body_json)));
-    unsigned char* encrypted_request_body_json = malloc(encrypted_request_body_json_length);
-
     size_t decrypted_response_body_json_length = 0;
     unsigned char* decrypted_response_body_json = NULL;
 
-    if (encrypted_request_body_json == NULL)
-    {
-        r = 20;
-        goto exit;
-    }
+    jsmn_parser parser;
+    jsmntok_t tokens[32] = { 0x00 };
+    jsmn_init(&parser);
 
     snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"body_sha512\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", body_sha512 ? body_sha512 : "");
 
-    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, request_body_json_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, encrypted_request_body_json_length, &encrypted_request_body_json_length, 1);
-    if (r != 0)
-    {
-        r = 1;
-        goto exit;
-    }
-
-    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
-
-    request.url = url;
-    request.url_length = server_url_length + path_length;
-    request.method = GLITCHEDHTTPS_POST;
-    request.content = (char*)encrypted_request_body_json;
-    request.content_length = encrypted_request_body_json_length;
-    request.content_type = "text/plain";
-    request.content_type_length = 10;
-
-    struct glitchedhttps_header additional_headers[] = {
-        { "ed25519-signature", sig },
-    };
-
-    request.additional_headers_count = 1;
-    request.additional_headers = additional_headers;
-
-    r = glitchedhttps_submit(&request, &response);
+    r = encrypt_sign_and_post(ctx, request_body_json, request_body_json_length, &response, url, server_url_length + path_length);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -577,11 +512,11 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 
     if (!is_successful(response))
     {
-        r = response->status_code;
+        r = response ? response->status_code : -2;
         goto exit;
     }
 
-    decrypted_response_body_json = malloc((decrypted_response_body_json_length = encrypted_request_body_json_length));
+    decrypted_response_body_json = malloc((decrypted_response_body_json_length = response->content_length));
     if (decrypted_response_body_json == NULL)
     {
         r = 20;
@@ -594,10 +529,6 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         goto exit;
     }
 
-    jsmn_parser parser;
-    jsmntok_t tokens[32] = { 0x00 };
-
-    jsmn_init(&parser);
     r = jsmn_parse(&parser, (const char*)decrypted_response_body_json, decrypted_response_body_json_length, tokens, 8);
 
     if (r < 1 || tokens[0].type != JSMN_OBJECT)
@@ -663,21 +594,16 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 
     r = 0;
 exit:
-    if (encrypted_request_body_json)
-    {
-        mbedtls_platform_zeroize(encrypted_request_body_json, encrypted_request_body_json_length);
-        free(encrypted_request_body_json);
-    }
     if (decrypted_response_body_json)
     {
         mbedtls_platform_zeroize(decrypted_response_body_json, decrypted_response_body_json_length);
         free(decrypted_response_body_json);
     }
     mbedtls_platform_zeroize(url, sizeof(url));
-    mbedtls_platform_zeroize(sig, sizeof(sig));
+    mbedtls_platform_zeroize(tokens, sizeof(tokens));
+    mbedtls_platform_zeroize(&parser, sizeof(parser));
     mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
     mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
-    mbedtls_platform_zeroize(&request, sizeof(request));
     glitchedhttps_response_free(response);
     return r;
 }
@@ -718,15 +644,11 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
-
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
     cecies_curve448_keypair curve448_keypair;
     cecies_generate_curve448_keypair(&curve448_keypair, additional_entropy, additional_entropy_length);
-
-    char sig[128 + 1] = { 0x00 };
 
     unsigned char entropy[256];
     unsigned char ed25519_seed[32];
@@ -758,13 +680,9 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
     uint8_t* encrypted_curve448_private_key = NULL;
     size_t encrypted_curve448_private_key_length = 0;
 
-    struct glitchedhttps_request request = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
     char request_body_json[1024] = { 0x00 };
-
-    unsigned char encrypted_request_body_json[2048] = { 0x00 };
-    size_t encrypted_request_body_json_length = 0;
 
     if (pwcrypt_encrypt((const uint8_t*)ed25519_private_hexstr, 128, 8, (const uint8_t*)ctx->user_pw, user_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1) != 0)
     {
@@ -780,31 +698,7 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"public_key_ed25519\":\"%s\",\"encrypted_private_key_ed25519\":\"%s\",\"public_key_curve448\":\"%s\",\"encrypted_private_key_curve448\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", ed25519_public_hexstr, encrypted_ed25519_private_key, curve448_keypair.public_key.hexstring, encrypted_curve448_private_key);
 
-    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, strlen(request_body_json), string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, sizeof(encrypted_request_body_json), &encrypted_request_body_json_length, 1);
-    if (r != 0)
-    {
-        r = 1;
-        goto exit;
-    }
-
-    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
-
-    request.url = url;
-    request.url_length = server_url_length + path_length;
-    request.method = GLITCHEDHTTPS_POST;
-    request.content = (char*)encrypted_request_body_json;
-    request.content_length = encrypted_request_body_json_length;
-    request.content_type = "text/plain";
-    request.content_type_length = 10;
-
-    struct glitchedhttps_header additional_headers[] = {
-        { "ed25519-signature", sig },
-    };
-
-    request.additional_headers_count = 1;
-    request.additional_headers = additional_headers;
-
-    r = glitchedhttps_submit(&request, &response);
+    r = encrypt_sign_and_post(ctx, request_body_json, strlen(request_body_json), &response, url, server_url_length + path_length);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -814,7 +708,7 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     if (!is_successful(response))
     {
-        r = response->status_code;
+        r = response ? response->status_code : -2;
         goto exit;
     }
 
@@ -847,12 +741,9 @@ exit:
         free(encrypted_curve448_private_key);
     }
     mbedtls_platform_zeroize(url, sizeof(url));
-    mbedtls_platform_zeroize(sig, sizeof(sig));
     mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
     mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
-    mbedtls_platform_zeroize(&request, sizeof(request));
     mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
-    mbedtls_platform_zeroize(encrypted_request_body_json, sizeof(encrypted_request_body_json));
     mbedtls_platform_zeroize(ed25519_seed, sizeof(ed25519_seed));
     mbedtls_platform_zeroize(ed25519_public, sizeof(ed25519_public));
     mbedtls_platform_zeroize(ed25519_public_hexstr, sizeof(ed25519_public_hexstr));
@@ -879,23 +770,40 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
-
     char pw_sha512[128 + 1] = { 0x00 };
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
-    char sig[128 + 1] = { 0x00 };
-
-    struct glitchedhttps_request request = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
-    size_t request_body_json_length = 0;
     char request_body_json[1024] = { 0x00 };
 
     snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "");
+
+    r = encrypt_sign_and_post(ctx, request_body_json, strlen(request_body_json), &response, url, server_url_length + path_length);
+
+    if (r != GLITCHEDHTTPS_SUCCESS)
+    {
+        r = -2;
+        goto exit;
+    }
+
+    if (!is_successful(response))
+    {
+        r = response ? response->status_code : -2;
+        goto exit;
+    }
+
+    r = 0;
+exit:
+    mbedtls_platform_zeroize(url, sizeof(url));
+    mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
+    mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
+    glitchedhttps_response_free(response);
+    return r;
 }
 
 int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256])
@@ -914,7 +822,40 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
+    char pw_sha512[128 + 1] = { 0x00 };
+    sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
+
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
+    struct glitchedhttps_response* response = NULL;
+
+    char request_body_json[1024] = { 0x00 };
+
+    snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"action\":%d}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", action);
+
+    r = encrypt_sign_and_post(ctx, request_body_json, strlen(request_body_json), &response, url, server_url_length + path_length);
+
+    if (r != GLITCHEDHTTPS_SUCCESS)
+    {
+        r = -2;
+        goto exit;
+    }
+
+    if (!is_successful(response))
+    {
+        r = response ? response->status_code : -2;
+        goto exit;
+    }
+
+    r = 0;
+exit:
+    mbedtls_platform_zeroize(url, sizeof(url));
+    mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
+    mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
+    glitchedhttps_response_free(response);
+    return r;
 }
 
 int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json)
@@ -934,17 +875,12 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
         return r;
     }
 
-    refresh_server_keys(ctx, 0);
-
     char pw_sha512[128 + 1] = { 0x00 };
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
-    char sig[128 + 1] = { 0x00 };
-
-    struct glitchedhttps_request request = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
     uint8_t* encrypted_body_json = NULL;
@@ -952,9 +888,6 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     char* request_body_json = NULL;
     size_t request_body_json_length = 0;
-
-    unsigned char* encrypted_request_body_json = NULL;
-    size_t encrypted_request_body_json_length = 0;
 
     r = pwcrypt_encrypt((const uint8_t*)body_json, body_json_length, 8, (const uint8_t*)ctx->user_pw, strlen(ctx->user_pw), OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_body_json, &encrypted_body_json_length, 1);
     if (r != 0)
@@ -966,10 +899,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     request_body_json_length = 1024 + encrypted_body_json_length;
     request_body_json = malloc(request_body_json_length);
 
-    encrypted_request_body_json_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(request_body_json_length));
-    encrypted_request_body_json = malloc(encrypted_request_body_json_length);
-
-    if (request_body_json == NULL || encrypted_request_body_json == NULL)
+    if (request_body_json == NULL)
     {
         r = 20;
         goto exit;
@@ -977,31 +907,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     snprintf(request_body_json, request_body_json_length, "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"body\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", encrypted_body_json);
 
-    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, request_body_json_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, encrypted_request_body_json_length, &encrypted_request_body_json_length, 1);
-    if (r != 0)
-    {
-        r = 1;
-        goto exit;
-    }
-
-    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
-
-    request.url = url;
-    request.url_length = server_url_length + path_length;
-    request.method = GLITCHEDHTTPS_POST;
-    request.content = (char*)encrypted_request_body_json;
-    request.content_length = encrypted_request_body_json_length;
-    request.content_type = "text/plain";
-    request.content_type_length = 10;
-
-    struct glitchedhttps_header additional_headers[] = {
-        { "ed25519-signature", sig },
-    };
-
-    request.additional_headers_count = 1;
-    request.additional_headers = additional_headers;
-
-    r = glitchedhttps_submit(&request, &response);
+    r = encrypt_sign_and_post(ctx, request_body_json, request_body_json_length, &response, url, server_url_length + path_length);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
@@ -1011,7 +917,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     if (!is_successful(response))
     {
-        r = response->status_code;
+        r = response ? response->status_code : -2;
         goto exit;
     }
 
@@ -1033,16 +939,9 @@ exit:
         mbedtls_platform_zeroize(request_body_json, request_body_json_length);
         free(request_body_json);
     }
-    if (encrypted_request_body_json)
-    {
-        mbedtls_platform_zeroize(encrypted_request_body_json, encrypted_request_body_json_length);
-        free(encrypted_request_body_json);
-    }
     mbedtls_platform_zeroize(url, sizeof(url));
-    mbedtls_platform_zeroize(sig, sizeof(sig));
     mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
     mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
-    mbedtls_platform_zeroize(&request, sizeof(request));
     glitchedhttps_response_free(response);
     return r;
 }
