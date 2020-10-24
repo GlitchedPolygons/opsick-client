@@ -17,6 +17,7 @@
 #include "../include/opsick/opsick-client.h"
 #include "../lib/pwcrypt/include/pwcrypt.h"
 #include "../lib/cecies/include/cecies/util.h"
+#include "../lib/cecies/include/cecies/keygen.h"
 #include "../lib/cecies/include/cecies/encrypt.h"
 #include "../lib/cecies/include/cecies/decrypt.h"
 #include "../lib/ed25519/src/ed25519.h"
@@ -27,6 +28,7 @@
 #include <assert.h>
 #include <glitchedhttps.h>
 #include <glitchedhttps_strutil.h>
+#include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 #include <mbedtls/platform_util.h>
 
@@ -161,10 +163,10 @@ static inline int jsoneq(const char* json, const jsmntok_t* token, const char* s
     return token->type != JSMN_STRING || string_length != token->end - token->start || strncmp(json + token->start, string, token->end - token->start) != 0;
 }
 
-static inline void sha512(const char* pw, const size_t pw_length, char out[128 + 1])
+static inline void sha512(const char* msg, const size_t msg_length, char out[128 + 1])
 {
     unsigned char hash[64];
-    mbedtls_sha512_ret((const unsigned char*)pw, pw_length, hash, 0);
+    mbedtls_sha512_ret((const unsigned char*)msg, msg_length, hash, 0);
     cecies_bin2hexstr(hash, sizeof(hash), out, 128 + 1, NULL, 0);
 }
 
@@ -651,10 +653,10 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     int r = -1;
 
-    size_t server_url_length;
-
     const char* path = "/users/keys/update";
     const size_t path_length = strlen(path);
+
+    size_t server_url_length;
 
     if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
@@ -662,6 +664,147 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
     }
 
     refresh_server_keys(ctx, 0);
+
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
+    cecies_curve448_keypair curve448_keypair;
+    cecies_generate_curve448_keypair(&curve448_keypair, additional_entropy, additional_entropy_length);
+
+    char sig[128 + 1] = { 0x00 };
+
+    unsigned char entropy[256];
+    unsigned char ed25519_seed[32];
+    unsigned char ed25519_public[32];
+    unsigned char ed25519_private[64];
+    char ed25519_public_hexstr[64 + 1] = { 0x00 };
+    char ed25519_private_hexstr[128 + 1] = { 0x00 };
+
+    cecies_dev_urandom(entropy, sizeof(entropy));
+
+    if (additional_entropy != NULL)
+    {
+        mbedtls_sha256_ret(additional_entropy, additional_entropy_length, entropy + (sizeof(entropy) - 32), 0);
+    }
+
+    char pw_sha512[128 + 1] = { 0x00 };
+    const size_t user_pw_length = strlen(ctx->user_pw);
+    sha512(ctx->user_pw, user_pw_length, pw_sha512);
+
+    mbedtls_sha256_ret(entropy, sizeof(entropy), ed25519_seed, 0);
+    ed25519_create_keypair(ed25519_public, ed25519_private, ed25519_seed);
+
+    cecies_bin2hexstr(ed25519_public, sizeof(ed25519_public), ed25519_public_hexstr, sizeof(ed25519_public_hexstr), NULL, 0);
+    cecies_bin2hexstr(ed25519_private, sizeof(ed25519_private), ed25519_private_hexstr, sizeof(ed25519_private_hexstr), NULL, 0);
+
+    uint8_t* encrypted_ed25519_private_key = NULL;
+    size_t encrypted_ed25519_private_key_length = 0;
+
+    uint8_t* encrypted_curve448_private_key = NULL;
+    size_t encrypted_curve448_private_key_length = 0;
+
+    struct glitchedhttps_request request = { 0x00 };
+    struct glitchedhttps_response* response = NULL;
+
+    char request_body_json[1024] = { 0x00 };
+
+    unsigned char encrypted_request_body_json[2048] = { 0x00 };
+    size_t encrypted_request_body_json_length = 0;
+
+    if (pwcrypt_encrypt((const uint8_t*)ed25519_private_hexstr, 128, 8, (const uint8_t*)ctx->user_pw, user_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1) != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    if (pwcrypt_encrypt((const uint8_t*)curve448_keypair.private_key.hexstring, 112, 8, (const uint8_t*)ctx->user_pw, user_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_curve448_private_key, &encrypted_curve448_private_key_length, 1) != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"public_key_ed25519\":\"%s\",\"encrypted_private_key_ed25519\":\"%s\",\"public_key_curve448\":\"%s\",\"encrypted_private_key_curve448\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", ed25519_public_hexstr, encrypted_ed25519_private_key, curve448_keypair.public_key.hexstring, encrypted_curve448_private_key);
+
+    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, strlen(request_body_json), string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, sizeof(encrypted_request_body_json), &encrypted_request_body_json_length, 1);
+    if (r != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
+
+    request.url = url;
+    request.url_length = server_url_length + path_length;
+    request.method = GLITCHEDHTTPS_POST;
+    request.content = (char*)encrypted_request_body_json;
+    request.content_length = encrypted_request_body_json_length;
+    request.content_type = "text/plain";
+    request.content_type_length = 10;
+
+    struct glitchedhttps_header additional_headers[] = {
+        { "ed25519-signature", sig },
+    };
+
+    request.additional_headers_count = 1;
+    request.additional_headers = additional_headers;
+
+    r = glitchedhttps_submit(&request, &response);
+
+    if (r != GLITCHEDHTTPS_SUCCESS)
+    {
+        r = -2;
+        goto exit;
+    }
+
+    if (!is_successful(response))
+    {
+        r = response->status_code;
+        goto exit;
+    }
+
+    mbedtls_platform_zeroize(ctx->user_public_ed25519_key, sizeof(ctx->user_public_ed25519_key));
+    mbedtls_platform_zeroize(ctx->user_private_ed25519_key, sizeof(ctx->user_private_ed25519_key));
+    mbedtls_platform_zeroize(ctx->user_public_curve448_key, sizeof(ctx->user_public_curve448_key));
+    mbedtls_platform_zeroize(ctx->user_private_curve448_key, sizeof(ctx->user_private_curve448_key));
+
+    memcpy(ctx->user_public_ed25519_key, ed25519_public_hexstr, 64);
+    memcpy(ctx->user_private_ed25519_key, ed25519_private_hexstr, 128);
+    memcpy(ctx->user_public_curve448_key, curve448_keypair.public_key.hexstring, 112);
+    memcpy(ctx->user_private_curve448_key, curve448_keypair.private_key.hexstring, 112);
+
+    if (!is_valid_server_sig(ctx, pw_sha512, 128, response))
+    {
+        r = -10;
+        goto exit;
+    }
+
+    r = 0;
+exit:
+    if (encrypted_ed25519_private_key)
+    {
+        mbedtls_platform_zeroize(encrypted_ed25519_private_key, encrypted_ed25519_private_key_length);
+        free(encrypted_ed25519_private_key);
+    }
+    if (encrypted_curve448_private_key)
+    {
+        mbedtls_platform_zeroize(encrypted_curve448_private_key, encrypted_curve448_private_key_length);
+        free(encrypted_curve448_private_key);
+    }
+    mbedtls_platform_zeroize(url, sizeof(url));
+    mbedtls_platform_zeroize(sig, sizeof(sig));
+    mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
+    mbedtls_platform_zeroize(&request, sizeof(request));
+    mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
+    mbedtls_platform_zeroize(encrypted_request_body_json, sizeof(encrypted_request_body_json));
+    mbedtls_platform_zeroize(ed25519_public, sizeof(ed25519_public));
+    mbedtls_platform_zeroize(ed25519_public_hexstr, sizeof(ed25519_public_hexstr));
+    mbedtls_platform_zeroize(ed25519_private, sizeof(ed25519_private));
+    mbedtls_platform_zeroize(ed25519_private_hexstr, sizeof(ed25519_private_hexstr));
+    mbedtls_platform_zeroize(&curve448_keypair, sizeof(curve448_keypair));
+    glitchedhttps_response_free(response);
+    return r;
 }
 
 int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
