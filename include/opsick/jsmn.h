@@ -106,15 +106,15 @@ JSMN_API void jsmn_init(jsmn_parser *parser);
  * describing
  * a single JSON object.
  */
-JSMN_API int64_t jsmn_parse(jsmn_parser *parser, const char *js, const size_t len,
-                        jsmntok_t *tokens, const size_t num_tokens);
+JSMN_API int64_t jsmn_parse(jsmn_parser *parser, const char *js, const int64_t len,
+                        jsmntok_t *tokens, const int64_t num_tokens);
 
 #ifndef JSMN_HEADER
 /**
  * Allocates a fresh unused token from the token pool.
  */
 static jsmntok_t *jsmn_alloc_token(jsmn_parser *parser, jsmntok_t *tokens,
-                                   const size_t num_tokens) {
+                                   const int64_t num_tokens) {
   jsmntok_t *tok;
   if (parser->toknext >= num_tokens) {
     return NULL;
@@ -143,8 +143,8 @@ static void jsmn_fill_token(jsmntok_t *token, const jsmntype_t type,
  * Fills next available token with JSON primitive.
  */
 static int64_t jsmn_parse_primitive(jsmn_parser *parser, const char *js,
-                                const size_t len, jsmntok_t *tokens,
-                                const size_t num_tokens) {
+                                const int64_t len, jsmntok_t *tokens,
+                                const int64_t num_tokens) {
   jsmntok_t *token;
   int64_t start;
 
@@ -201,8 +201,8 @@ found:
  * Fills next token with JSON string.
  */
 static int64_t jsmn_parse_string(jsmn_parser *parser, const char *js,
-                             const size_t len, jsmntok_t *tokens,
-                             const size_t num_tokens) {
+                             const int64_t len, jsmntok_t *tokens,
+                             const int64_t num_tokens) {
   jsmntok_t *token;
 
   int64_t start = parser->pos;
@@ -275,8 +275,8 @@ static int64_t jsmn_parse_string(jsmn_parser *parser, const char *js,
 /**
  * Parse JSON string and fill tokens.
  */
-JSMN_API int64_t jsmn_parse(jsmn_parser *parser, const char *js, const size_t len,
-                        jsmntok_t *tokens, const size_t num_tokens) {
+JSMN_API int64_t jsmn_parse(jsmn_parser *parser, const char *js, const int64_t len,
+                        jsmntok_t *tokens, const int64_t num_tokens) {
   int64_t r;
   int64_t i;
   jsmntok_t *token;

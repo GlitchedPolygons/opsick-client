@@ -24,6 +24,7 @@
 #include "../include/opsick/jsmn.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include <glitchedhttps.h>
 #include <glitchedhttps_strutil.h>
@@ -315,15 +316,15 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
     }
 
     jsmn_init(&parser);
-    r = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
+    const int64_t n = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
 
-    if (r < 1 || tokens[0].type != JSMN_OBJECT)
+    if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
         r = -3;
         goto exit;
     }
 
-    for (int i = 1; i < r; ++i)
+    for (int i = 1; i < n; ++i)
     {
         if (jsoneq(response->content, &tokens[i], "public_key_ed25519", 18) == 0)
         {
@@ -530,7 +531,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         goto exit;
     }
 
-    int64_t n = jsmn_parse(&parser, (const char*)decrypted_response_body_json, decrypted_response_body_json_length, tokens, 32);
+    const int64_t n = jsmn_parse(&parser, (const char*)decrypted_response_body_json, decrypted_response_body_json_length, tokens, 32);
 
     if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
@@ -658,7 +659,7 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
         goto exit;
     }
 
-    int64_t n = jsmn_parse(&parser, response->content, response->content_length, tokens, 32);
+    const int64_t n = jsmn_parse(&parser, response->content, response->content_length, tokens, 32);
 
     if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
