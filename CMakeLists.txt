@@ -44,6 +44,7 @@ set(${PROJECT_NAME}_INCLUDE_DIR
         )
 
 set(${PROJECT_NAME}_HEADERS
+        ${CMAKE_CURRENT_LIST_DIR}/include/opsick/jsmn.h
         ${CMAKE_CURRENT_LIST_DIR}/include/opsick/opsick-client.h
         )
 

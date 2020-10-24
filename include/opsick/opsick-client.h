@@ -82,7 +82,7 @@ struct opsick_client_user_context
     /**
      * User account ID.
      */
-    uint64_t user_id;
+    uint64_t id;
 
     /**
      * TOTP (2FA token) - if applicable.    <p>
@@ -91,12 +91,27 @@ struct opsick_client_user_context
      * Fill this with \p 0x00 if you wish to omit this parameter! <p>
      * This will be reset by all endpoint request functions on exit, even in case of failure!
      */
-    char user_totp[6 + 1];
+    char totp[6 + 1];
 
     /**
      * User account password.
      */
-    char user_pw[1024];
+    char pw[1024];
+
+    /**
+     * The Unix timestamp of when the user account was created.
+     */
+    uint64_t iat_utc;
+
+    /**
+     * The Unix timestamp of when the user account will expire/has expired.
+     */
+    uint64_t exp_utc;
+
+    /**
+     * The Unix timestamp of when the user account was last accessed (e.g. sent new data to the server).
+     */
+    uint64_t lastmod_utc;
 
     /**
      * The user's private ed25519 key as a hex-encoded, NUL-terminated string. <p>
@@ -159,14 +174,15 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @param new_pw The new user password.
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
+ * * \p 20 if out of memory (uh oh...) <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
@@ -181,13 +197,14 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * * user_private_curve448_key: #opsick_client_user_context.user_private_curve448_key
  * @param body_sha512 The current local machine's body SHA2-512 (of the encrypted body ciphertext).
  * @param out_body_json Output string where the downloaded user body will be written into (this will be allocated if there was a newer body upstream, or set to \p NULL if the local one is already the most recent one).
+ * @param out_body_json_length Where to write the decrypted output user body json's string length into.
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
@@ -195,10 +212,11 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * * \p 20 if out of memory (uh oh...) <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -3 if the response couldn't be parsed/contained invalid data. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
-OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json);
+OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json, size_t* out_body_json_length);
 
 /**
  * Fetches a user's public keys and encrypted private keys from the server db.
@@ -206,9 +224,9 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * @return
  * * \p 0 on success <br>
  * * \p 1 if encryption failed <br>
@@ -226,9 +244,9 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @param additional_entropy [OPTIONAL] Additional entropy to use for key generation. Pass \p NULL if you want to omit this parameter!
  * @param additional_entropy_length [OPTIONAL] Length of the passed \p additional_entropy buffer (ignored if \p additional_entropy is <c>NULL</c>).
@@ -248,9 +266,9 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @return
  * * \p 0 on success <br>
@@ -268,9 +286,9 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_conte
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * * user_private_curve448_key: #opsick_client_user_context.user_private_curve448_key (if \p action is \p 1).
  * @param action \p 0 = Disable 2FA <br> \p 1 = Enable 2FA <br> \p 2 = Verify 2FA token
@@ -281,6 +299,7 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_conte
  * * \p 1 if encryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -3 if the response couldn't be parsed/contained invalid data. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
@@ -292,9 +311,9 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_conte
  * * server_url: #opsick_client_user_context.server_url <br>
  * * server_public_ed25519_key: #opsick_client_user_context.server_public_ed25519_key
  * * server_public_curve448_key: #opsick_client_user_context.server_public_curve448_key
- * * user_id: #opsick_client_user_context.user_id <br>
- * * user_totp: #opsick_client_user_context.user_totp (if user has 2FA enabled).
- * * user_pw: #opsick_client_user_context.user_pw
+ * * id: #opsick_client_user_context.id <br>
+ * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
+ * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @param body_json The new body json to encrypt using the user's password and submit to the opsick backend.
  * @return
