@@ -644,6 +644,7 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
         return r;
     }
 
+    // TODO: impl!
     refresh_server_keys(ctx, 0);
 }
 
@@ -798,6 +799,7 @@ exit:
     mbedtls_platform_zeroize(&request, sizeof(request));
     mbedtls_platform_zeroize(request_body_json, sizeof(request_body_json));
     mbedtls_platform_zeroize(encrypted_request_body_json, sizeof(encrypted_request_body_json));
+    mbedtls_platform_zeroize(ed25519_seed, sizeof(ed25519_seed));
     mbedtls_platform_zeroize(ed25519_public, sizeof(ed25519_public));
     mbedtls_platform_zeroize(ed25519_public_hexstr, sizeof(ed25519_public_hexstr));
     mbedtls_platform_zeroize(ed25519_private, sizeof(ed25519_private));
