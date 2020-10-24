@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['last_5fserver_5fkey_5frefresh_40',['last_server_key_refresh',['../structopsick__client__user__context.html#a47cf22fac234c9c2c4041032e5c99e83',1,'opsick_client_user_context']]]
+  ['exp_5futc_43',['exp_utc',['../structopsick__client__user__context.html#a1a7cbd5b88477f66e33a3de0585e150a',1,'opsick_client_user_context']]]
 ];
