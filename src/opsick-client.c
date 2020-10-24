@@ -544,7 +544,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     jsmntok_t tokens[32] = { 0x00 };
 
     jsmn_init(&parser);
-    r = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
+    r = jsmn_parse(&parser, (const char*)decrypted_response_body_json, decrypted_response_body_json_length, tokens, 8);
 
     if (r < 1 || tokens[0].type != JSMN_OBJECT)
     {
