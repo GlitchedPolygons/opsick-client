@@ -24,7 +24,6 @@
 #include "../lib/jsmn/jsmn.h"
 
 #include <stdio.h>
-#include <ctype.h>
 #include <assert.h>
 #include <glitchedhttps.h>
 #include <glitchedhttps_strutil.h>
@@ -163,11 +162,66 @@ static inline int jsoneq(const char* json, const jsmntok_t* token, const char* s
     return token->type != JSMN_STRING || string_length != token->end - token->start || strncmp(json + token->start, string, token->end - token->start) != 0;
 }
 
-static inline void sha512(const char* msg, const size_t msg_length, char out[128 + 1])
+static inline void sha512(const char* msg, const size_t msg_length, char out_hexstr[128 + 1])
 {
     unsigned char hash[64];
     mbedtls_sha512_ret((const unsigned char*)msg, msg_length, hash, 0);
-    cecies_bin2hexstr(hash, sizeof(hash), out, 128 + 1, NULL, 0);
+    cecies_bin2hexstr(hash, sizeof(hash), out_hexstr, 128 + 1, NULL, 0);
+}
+
+static inline int encrypt_sign_and_post(struct opsick_client_user_context* ctx, const char* request_body, const size_t request_body_length, struct glitchedhttps_response** out_response, char* url, const size_t url_length)
+{
+    int r = -1;
+    refresh_server_keys(ctx, 0);
+
+    size_t encrypted_request_body_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(request_body_length));
+    unsigned char* encrypted_request_body = malloc(encrypted_request_body_length);
+
+    if (encrypted_request_body == NULL)
+    {
+        r = 20;
+        goto exit;
+    }
+
+    r = cecies_curve448_encrypt((const unsigned char*)request_body, request_body_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body, encrypted_request_body_length, &encrypted_request_body_length, 1);
+    if (r != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    char sig[128 + 1] = { 0x00 };
+    sign(ctx, request_body, request_body_length, sig);
+
+    struct glitchedhttps_request request = { 0x00 };
+
+    request.url = url;
+    request.url_length = url_length;
+    request.method = GLITCHEDHTTPS_POST;
+    request.content = (char*)encrypted_request_body;
+    request.content_length = encrypted_request_body_length;
+    request.content_type = "text/plain";
+    request.content_type_length = 10;
+
+    struct glitchedhttps_header additional_headers[] = {
+        { "ed25519-signature", sig },
+    };
+
+    request.additional_headers_count = 1;
+    request.additional_headers = additional_headers;
+
+    r = glitchedhttps_submit(&request, out_response);
+
+    mbedtls_platform_zeroize(&request, sizeof(request));
+    mbedtls_platform_zeroize(additional_headers, sizeof(additional_headers));
+
+exit:
+    if (encrypted_request_body)
+    {
+        mbedtls_platform_zeroize(encrypted_request_body, encrypted_request_body_length);
+        free(encrypted_request_body);
+    }
+    return r;
 }
 
 int opsick_client_test_connection(const char* server_url)
@@ -826,6 +880,22 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
     }
 
     refresh_server_keys(ctx, 0);
+
+    char pw_sha512[128 + 1] = { 0x00 };
+    sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
+
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
+    char sig[128 + 1] = { 0x00 };
+
+    struct glitchedhttps_request request = { 0x00 };
+    struct glitchedhttps_response* response = NULL;
+
+    size_t request_body_json_length = 0;
+    char request_body_json[1024] = { 0x00 };
+
+    snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "");
 }
 
 int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256])
