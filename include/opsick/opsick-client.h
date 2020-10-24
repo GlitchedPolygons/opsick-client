@@ -233,6 +233,7 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * \p 2 if decryption failed <br>
  * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
  * * \p -2 if connection couldn't be established successfully. <br>
+ * * \p -3 if one or more returned keys is of invalid length. <br>
  * * \p -10 if the server's response signature couldn't be verified. <br>
  * * The returned HTTP status code representing the error in case of a failure.
  */
