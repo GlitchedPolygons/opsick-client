@@ -339,7 +339,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     uint8_t* encrypted_curve448_private_key = NULL;
     size_t encrypted_curve448_private_key_length = 0;
 
-    char pw_sha512[128 + 1];
+    char pw_sha512[128 + 1] = { 0x00 };
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char new_pw_sha512[128 + 1];
@@ -452,12 +452,148 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     const char* path = "/users";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
 
     refresh_server_keys(ctx, 0);
+
+    char pw_sha512[128 + 1] = { 0x00 };
+    sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
+
+    char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
+    snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
+
+    char sig[128 + 1] = { 0x00 };
+
+    struct glitchedhttps_request request = { 0x00 };
+    struct glitchedhttps_response* response = NULL;
+
+    size_t request_body_json_length = 0;
+    char request_body_json[512] = { 0x00 };
+
+    size_t encrypted_request_body_json_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(sizeof(request_body_json)));
+    unsigned char* encrypted_request_body_json = malloc(encrypted_request_body_json_length);
+
+    size_t decrypted_response_body_json_length = 0;
+    unsigned char* decrypted_response_body_json = NULL;
+
+    if (encrypted_request_body_json == NULL)
+    {
+        r = 20;
+        goto exit;
+    }
+
+    snprintf(request_body_json, sizeof(request_body_json), "{\"user_id\":%zu,\"pw\":\"%s\",\"totp\":\"%s\",\"body_sha512\":\"%s\"}", ctx->user_id, pw_sha512, has_totp_set(ctx) ? ctx->user_totp : "", body_sha512 ? body_sha512 : "");
+
+    r = cecies_curve448_encrypt((const unsigned char*)request_body_json, request_body_json_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body_json, encrypted_request_body_json_length, &encrypted_request_body_json_length, 1);
+    if (r != 0)
+    {
+        r = 1;
+        goto exit;
+    }
+
+    sign(ctx, (const char*)encrypted_request_body_json, encrypted_request_body_json_length, sig);
+
+    request.url = url;
+    request.url_length = server_url_length + path_length;
+    request.method = GLITCHEDHTTPS_POST;
+    request.content = (char*)encrypted_request_body_json;
+    request.content_length = encrypted_request_body_json_length;
+    request.content_type = "text/plain";
+    request.content_type_length = 10;
+
+    struct glitchedhttps_header additional_headers[] = {
+        { "ed25519-signature", sig },
+    };
+
+    request.additional_headers_count = 1;
+    request.additional_headers = additional_headers;
+
+    r = glitchedhttps_submit(&request, &response);
+
+    if (r != GLITCHEDHTTPS_SUCCESS)
+    {
+        r = -2;
+        goto exit;
+    }
+
+    if (!is_successful(response))
+    {
+        r = response->status_code;
+        goto exit;
+    }
+
+    decrypted_response_body_json = malloc((decrypted_response_body_json_length = encrypted_request_body_json_length));
+    if (decrypted_response_body_json == NULL)
+    {
+        r = 20;
+        goto exit;
+    }
+
+    if (cecies_curve448_decrypt((const unsigned char*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), decrypted_response_body_json, decrypted_response_body_json_length, &decrypted_response_body_json_length) != 0)
+    {
+        r = 2;
+        goto exit;
+    }
+
+    jsmn_parser parser;
+    jsmntok_t tokens[32] = { 0x00 };
+
+    jsmn_init(&parser);
+    r = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
+
+    if (r < 1 || tokens[0].type != JSMN_OBJECT)
+    {
+        r = -3;
+        goto exit;
+    }
+
+    // TODO: parse json here
+    for (int i = 1; i < r; ++i)
+    {
+        if (jsoneq(response->content, &tokens[i], "user_id", 18) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            const int len = t.end - t.start;
+            if (len != 64) // Ensure valid Ed25519 key length!
+            {
+                r = -3;
+                goto exit;
+            }
+
+            memcpy(ctx->server_public_ed25519_key, response->content + t.start, len);
+            ctx->server_public_ed25519_key[64] = '\0';
+            continue;
+        }
+    }
+
+    if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
+    {
+        r = -10;
+        goto exit;
+    }
+
+    r = 0;
+exit:
+    if (encrypted_request_body_json)
+    {
+        mbedtls_platform_zeroize(encrypted_request_body_json, encrypted_request_body_json_length);
+        free(encrypted_request_body_json);
+    }
+    if (decrypted_response_body_json)
+    {
+        mbedtls_platform_zeroize(decrypted_response_body_json, decrypted_response_body_json_length);
+        free(decrypted_response_body_json);
+    }
+    mbedtls_platform_zeroize(url, sizeof(url));
+    mbedtls_platform_zeroize(sig, sizeof(sig));
+    mbedtls_platform_zeroize(pw_sha512, sizeof(pw_sha512));
+    mbedtls_platform_zeroize(ctx->user_totp, sizeof(ctx->user_totp));
+    mbedtls_platform_zeroize(&request, sizeof(request));
+    glitchedhttps_response_free(response);
+    return r;
 }
 
 int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
@@ -471,7 +607,7 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
     const char* path = "/users/keys";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -490,7 +626,7 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
     const char* path = "/users/keys/update";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -509,7 +645,7 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
     const char* path = "/users/delete";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -528,7 +664,7 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
     const char* path = "/users/2fa";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL)|| server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
     {
         return r;
     }
@@ -555,7 +691,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     refresh_server_keys(ctx, 0);
 
-    char pw_sha512[128 + 1];
+    char pw_sha512[128 + 1] = { 0x00 };
     sha512(ctx->user_pw, strlen(ctx->user_pw), pw_sha512);
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
