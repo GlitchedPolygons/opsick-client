@@ -553,19 +553,49 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     // TODO: parse json here
     for (int i = 1; i < r; ++i)
     {
-        if (jsoneq(response->content, &tokens[i], "user_id", 18) == 0)
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "id", 2) == 0)
         {
             jsmntok_t t = tokens[i + 1];
-            const int len = t.end - t.start;
-            if (len != 64) // Ensure valid Ed25519 key length!
-            {
-                r = -3;
-                goto exit;
-            }
-
-            memcpy(ctx->server_public_ed25519_key, response->content + t.start, len);
-            ctx->server_public_ed25519_key[64] = '\0';
+            char* id = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            ctx->user_id = (uint64_t)strtoull(id, NULL, 10);
+            free(id);
             continue;
+        }
+
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "iat_utc", 7) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            char* iat_utc = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            // TODO write where here?
+            free(iat_utc);
+        }
+
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "exp_utc", 7) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            char* exp_utc = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            // TODO write strtoull where here?
+            free(exp_utc);
+        }
+
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "lastmod_utc", 11) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            char* lastmod_utc = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            // TODO write strtoull where here?
+            free(lastmod_utc);
+        }
+
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "body", 4) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            // TODO: write body here
+        }
+
+        if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "body_sha512", 11) == 0)
+        {
+            jsmntok_t t = tokens[i + 1];
+            // TODO write body sha512 here and compare
         }
     }
 
