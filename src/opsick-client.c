@@ -15,19 +15,20 @@
 */
 
 #include "../include/opsick/opsick-client.h"
-#include "../lib/pwcrypt/include/pwcrypt.h"
-#include "../lib/cecies/include/cecies/util.h"
-#include "../lib/cecies/include/cecies/keygen.h"
-#include "../lib/cecies/include/cecies/encrypt.h"
-#include "../lib/cecies/include/cecies/decrypt.h"
-#include "../lib/ed25519/src/ed25519.h"
-#include "../include/opsick/jsmn.h"
+#include "jsmn.h"
 
+#include "pwcrypt.h"
+#include "cecies/util.h"
+#include "cecies/keygen.h"
+#include "cecies/encrypt.h"
+#include "cecies/decrypt.h"
+#include "ed25519.h"
+
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <glitchedhttps.h>
-#include <glitchedhttps_strutil.h>
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 #include <mbedtls/platform_util.h>
@@ -90,6 +91,52 @@ static inline int has_private_keys(const struct opsick_client_user_context* ctx)
     return has_private_ed25519_key(ctx) && has_private_curve448_key(ctx);
 }
 
+static inline size_t opsick_strnlen(const char* str, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (str[i] == '\0')
+            return i;
+    }
+    return len;
+}
+
+static inline char* opsick_strndup(const char* str, size_t len)
+{
+    size_t act = opsick_strnlen(str, len);
+    char* dst = malloc(act + 1);
+    if (dst != NULL)
+    {
+        memmove(dst, str, act);
+        dst[act] = '\0';
+    }
+    return dst;
+}
+
+static inline int opsick_strncmpic(const char* str1, const char* str2, size_t n)
+{
+    size_t cmp = 0;
+    int ret = INT_MIN;
+
+    if (str1 == NULL || str2 == NULL)
+    {
+        return ret;
+    }
+
+    while ((*str1 || *str2) && cmp < n)
+    {
+        if ((ret = tolower((int)(*str1)) - tolower((int)(*str2))) != 0)
+        {
+            break;
+        }
+        cmp++;
+        str1++;
+        str2++;
+    }
+
+    return ret;
+}
+
 static inline void sign(const struct opsick_client_user_context* ctx, const char* string, const size_t string_length, char out[128 + 1])
 {
     unsigned char pub[32 + 1];
@@ -114,7 +161,7 @@ static int is_valid_server_sig(const struct opsick_client_user_context* ctx, con
     for (size_t i = 0; i < response->headers_count; ++i)
     {
         struct glitchedhttps_header h = response->headers[i];
-        if (glitchedhttps_strncmpic(h.type, "ed25519-signature", 17) == 0)
+        if (opsick_strncmpic(h.type, "ed25519-signature", 17) == 0)
         {
             snprintf(sig_hex, sizeof(sig_hex), "%s", h.value);
             break;
@@ -544,7 +591,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "id", 2) == 0)
         {
             jsmntok_t t = tokens[i + 1];
-            char* nr = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            char* nr = opsick_strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
             ctx->id = (uint64_t)strtoull(nr, NULL, 10);
             free(nr);
             continue;
@@ -553,7 +600,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "iat_utc", 7) == 0)
         {
             jsmntok_t t = tokens[i + 1];
-            char* nr = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            char* nr = opsick_strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
             ctx->iat_utc = (uint64_t)strtoull(nr, NULL, 10);
             free(nr);
             continue;
@@ -562,7 +609,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "exp_utc", 7) == 0)
         {
             jsmntok_t t = tokens[i + 1];
-            char* nr = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            char* nr = opsick_strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
             ctx->exp_utc = (uint64_t)strtoull(nr, NULL, 10);
             free(nr);
             continue;
@@ -571,7 +618,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "lastmod_utc", 11) == 0)
         {
             jsmntok_t t = tokens[i + 1];
-            char* nr = strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
+            char* nr = opsick_strndup((const char*)decrypted_response_body_json + t.start, t.end - t.start);
             ctx->lastmod_utc = (uint64_t)strtoull(nr, NULL, 10);
             free(nr);
             continue;

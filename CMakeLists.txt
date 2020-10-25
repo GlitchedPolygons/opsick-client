@@ -38,27 +38,42 @@ endif ()
 
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
 option(ENABLE_PROGRAMS "Build MbedTLS example programs." OFF)
+option(pwcrypt_BUILD_ONLY_LIB "Do not build the pwcrypt CLI" ON)
+
+set(${PROJECT_NAME}_PREV_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
 set(${PROJECT_NAME}_INCLUDE_DIR
         ${CMAKE_CURRENT_LIST_DIR}/include
         )
 
 set(${PROJECT_NAME}_HEADERS
-        ${CMAKE_CURRENT_LIST_DIR}/include/opsick/jsmn.h
         ${CMAKE_CURRENT_LIST_DIR}/include/opsick/opsick-client.h
         )
 
 set(${PROJECT_NAME}_SOURCES
+        ${CMAKE_CURRENT_LIST_DIR}/src/jsmn.h
         ${CMAKE_CURRENT_LIST_DIR}/src/opsick-client.c
         )
+
+set(BUILD_SHARED_LIBS OFF)
 
 if (NOT TARGET cecies)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/cecies cecies)
 endif ()
 
+if (NOT TARGET pwcrypt)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/pwcrypt pwcrypt)
+endif ()
+
+if (NOT TARGET orlp-ed25519)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ed25519 ed25519)
+endif ()
+
 if (NOT TARGET glitchedhttps)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/glitchedhttps glitchedhttps)
 endif ()
+
+set(BUILD_SHARED_LIBS ${${PROJECT_NAME}_PREV_BUILD_SHARED_LIBS})
 
 add_library(${PROJECT_NAME}
         ${${PROJECT_NAME}_HEADERS}
@@ -112,6 +127,8 @@ endif ()
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC cecies
+        PUBLIC pwcrypt
+        PUBLIC orlp-ed25519
         PUBLIC glitchedhttps
         )
 
