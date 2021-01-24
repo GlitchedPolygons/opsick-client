@@ -58,7 +58,7 @@ static inline int is_successful(struct glitchedhttps_response* response)
 
 static inline int has_totp_set(const struct opsick_client_user_context* ctx)
 {
-    for (int i = 0; i < sizeof(ctx->totp); ++i)
+    for (size_t i = 0; i < sizeof(ctx->totp); ++i)
     {
         if (ctx->totp[i] != 0x00)
             return 1;
@@ -68,7 +68,7 @@ static inline int has_totp_set(const struct opsick_client_user_context* ctx)
 
 static inline int has_private_ed25519_key(const struct opsick_client_user_context* ctx)
 {
-    for (int i = 0; i < sizeof(ctx->user_private_ed25519_key); ++i)
+    for (size_t i = 0; i < sizeof(ctx->user_private_ed25519_key); ++i)
     {
         if (ctx->user_private_ed25519_key[i] != 0x00)
             return 1;
@@ -78,7 +78,7 @@ static inline int has_private_ed25519_key(const struct opsick_client_user_contex
 
 static inline int has_private_curve448_key(const struct opsick_client_user_context* ctx)
 {
-    for (int i = 0; i < sizeof(ctx->user_private_curve448_key); ++i)
+    for (size_t i = 0; i < sizeof(ctx->user_private_curve448_key); ++i)
     {
         if (ctx->user_private_curve448_key[i] != 0x00)
             return 1;
@@ -371,7 +371,7 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
         goto exit;
     }
 
-    for (int i = 1; i < n; ++i)
+    for (int64_t i = 1; i < n; ++i)
     {
         if (jsoneq(response->content, &tokens[i], "public_key_ed25519", 18) == 0)
         {
@@ -586,7 +586,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         goto exit;
     }
 
-    for (int i = 1; i < n; ++i)
+    for (int64_t i = 1; i < n; ++i)
     {
         if (jsoneq((const char*)decrypted_response_body_json, &tokens[i], "id", 2) == 0)
         {
@@ -714,7 +714,7 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
         goto exit;
     }
 
-    for (int i = 1; i < n; ++i)
+    for (int64_t i = 1; i < n; ++i)
     {
         if (jsoneq(response->content, &tokens[i], "public_key_ed25519", 18) == 0)
         {
