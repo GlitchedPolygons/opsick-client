@@ -49,7 +49,7 @@ extern "C" {
 /**
  * Opsick client library version number (<strong>MINOR</strong>).
  */
-#define OPSICK_CLIENT_VERSION_MINOR 0
+#define OPSICK_CLIENT_VERSION_MINOR 1
 
 /**
  * Opsick client library version number (<strong>PATCH</strong>).

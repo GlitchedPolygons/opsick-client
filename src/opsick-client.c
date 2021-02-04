@@ -221,22 +221,13 @@ static inline int encrypt_sign_and_post(struct opsick_client_user_context* ctx, 
 {
     int r = -1;
     char sig[128 + 1] = { 0x00 };
-    unsigned char* encrypted_request_body;
-    size_t encrypted_request_body_length;
+    uint8_t* encrypted_request_body = NULL;
+    size_t encrypted_request_body_length = 0;
     struct glitchedhttps_request request = { 0x00 };
 
     refresh_server_keys(ctx, 0);
 
-    encrypted_request_body_length = cecies_calc_base64_length(cecies_curve448_calc_output_buffer_needed_size(request_body_length));
-    encrypted_request_body = malloc(encrypted_request_body_length);
-
-    if (encrypted_request_body == NULL)
-    {
-        r = 20;
-        goto exit;
-    }
-
-    r = cecies_curve448_encrypt((const unsigned char*)request_body, request_body_length, string2curve448key(ctx->server_public_curve448_key), encrypted_request_body, encrypted_request_body_length, &encrypted_request_body_length, 1);
+    r = cecies_curve448_encrypt((const uint8_t*)request_body, request_body_length, 0, string2curve448key(ctx->server_public_curve448_key), &encrypted_request_body, &encrypted_request_body_length, 1);
     if (r != 0)
     {
         r = 1;
@@ -542,8 +533,8 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     char request_body_json[512] = { 0x00 };
     struct glitchedhttps_response* response = NULL;
 
+    uint8_t* decrypted_response_body_json = NULL;
     size_t decrypted_response_body_json_length = 0;
-    unsigned char* decrypted_response_body_json = NULL;
 
     jsmn_parser parser;
     jsmntok_t tokens[32] = { 0x00 };
@@ -565,14 +556,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
         goto exit;
     }
 
-    decrypted_response_body_json = malloc((decrypted_response_body_json_length = response->content_length));
-    if (decrypted_response_body_json == NULL)
-    {
-        r = 20;
-        goto exit;
-    }
-
-    if (cecies_curve448_decrypt((const unsigned char*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), decrypted_response_body_json, decrypted_response_body_json_length, &decrypted_response_body_json_length) != 0)
+    if (cecies_curve448_decrypt((const uint8_t*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), &decrypted_response_body_json, &decrypted_response_body_json_length) != 0)
     {
         r = 2;
         goto exit;
@@ -990,8 +974,8 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
     snprintf(url, sizeof(url), "%s%s", ctx->server_url, path);
 
+    uint8_t* decrypted_response_body_json = NULL;
     size_t decrypted_response_body_json_length = 0;
-    unsigned char* decrypted_response_body_json = NULL;
 
     struct glitchedhttps_response* response = NULL;
 
@@ -1014,14 +998,7 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
 
     if (action == 1)
     {
-        decrypted_response_body_json = malloc((decrypted_response_body_json_length = response->content_length));
-        if (decrypted_response_body_json == NULL)
-        {
-            r = 20;
-            goto exit;
-        }
-
-        if (cecies_curve448_decrypt((const unsigned char*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), decrypted_response_body_json, decrypted_response_body_json_length, &decrypted_response_body_json_length) != 0)
+        if (cecies_curve448_decrypt((const uint8_t*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), &decrypted_response_body_json, &decrypted_response_body_json_length) != 0)
         {
             r = 2;
             goto exit;
