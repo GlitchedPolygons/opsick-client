@@ -213,7 +213,7 @@ static inline int jsoneq(const char* json, const jsmntok_t* token, const char* s
 static inline void sha512(const char* msg, const size_t msg_length, char out_hexstr[128 + 1])
 {
     unsigned char hash[64];
-    mbedtls_sha512_ret((const unsigned char*)msg, msg_length, hash, 0);
+    mbedtls_sha512((const unsigned char*)msg, msg_length, hash, 0);
     cecies_bin2hexstr(hash, sizeof(hash), out_hexstr, 128 + 1, NULL, 0);
 }
 
@@ -807,14 +807,14 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     if (additional_entropy != NULL)
     {
-        mbedtls_sha256_ret(additional_entropy, additional_entropy_length, entropy + (sizeof(entropy) - 32), 0);
+        mbedtls_sha256(additional_entropy, additional_entropy_length, entropy + (sizeof(entropy) - 32), 0);
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
     const size_t pw_length = strlen(ctx->pw);
     sha512(ctx->pw, pw_length, pw_sha512);
 
-    mbedtls_sha256_ret(entropy, sizeof(entropy), ed25519_seed, 0);
+    mbedtls_sha256(entropy, sizeof(entropy), ed25519_seed, 0);
     ed25519_create_keypair(ed25519_public, ed25519_private, ed25519_seed);
 
     cecies_bin2hexstr(ed25519_public, sizeof(ed25519_public), ed25519_public_hexstr, sizeof(ed25519_public_hexstr), NULL, 0);
