@@ -54,7 +54,7 @@ extern "C" {
 /**
  * Opsick client library version number (<strong>PATCH</strong>).
  */
-#define OPSICK_CLIENT_VERSION_PATCH 1
+#define OPSICK_CLIENT_VERSION_PATCH 2
 
 /**
  * Opsick user profile containing parameters for requests to the opsick server as well as the user's actual data fields.

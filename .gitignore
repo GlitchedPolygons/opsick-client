@@ -9,6 +9,7 @@
 latex/
 
 ![Bb]uild.bat
+![Bb]uild-mingw.sh
 
 # ------------------------------------------------------
 # https://github.com/github/gitignore/blob/master/C.gitignore
