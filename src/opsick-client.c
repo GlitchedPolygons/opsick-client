@@ -207,7 +207,8 @@ static inline int refresh_server_keys(struct opsick_client_user_context* ctx, co
 
 static inline int jsoneq(const char* json, const jsmntok_t* token, const char* string, const int string_length)
 {
-    return token->type != JSMN_STRING || string_length != token->end - token->start || strncmp(json + token->start, string, token->end - token->start) != 0;
+    const size_t token_length = token->end - token->start;
+    return token->type != JSMN_STRING || string_length != token_length || strncmp(json + token->start, string, token_length) != 0;
 }
 
 static inline void sha512(const char* msg, const size_t msg_length, char out_hexstr[128 + 1])
@@ -364,7 +365,9 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 
     for (int64_t i = 1; i < n; ++i)
     {
-        if (jsoneq(response->content, &tokens[i], "public_key_ed25519", 18) == 0)
+        jsmntok_t* token = &tokens[i];
+
+        if (jsoneq(response->content, token, "public_key_ed25519", 18) == 0)
         {
             jsmntok_t t = tokens[i + 1];
             const int64_t len = t.end - t.start;
@@ -378,7 +381,7 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
             continue;
         }
 
-        if (jsoneq(response->content, &tokens[i], "public_key_curve448", 19))
+        if (jsoneq(response->content, token, "public_key_curve448", 19) == 0)
         {
             jsmntok_t t = tokens[i + 1];
             const int64_t len = t.end - t.start;
