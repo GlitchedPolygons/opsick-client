@@ -41,6 +41,30 @@
 
 const static unsigned char Z256[256] = { 0x00 };
 
+static int initialized = 0;
+
+int opsick_client_init()
+{
+    if (initialized)
+        return OPSICK_CLIENT_SUCCESS;
+
+    const int r = glitchedhttps_init();
+    if (r != 0)
+        return -1;
+
+    initialized = 1;
+    return OPSICK_CLIENT_SUCCESS;
+}
+
+void opsick_client_free()
+{
+    if (!initialized)
+        return;
+
+    glitchedhttps_free();
+    initialized = 0;
+}
+
 static inline int is_valid_server_url(const char* server_url, size_t* out_server_url_length)
 {
     return server_url != NULL //
@@ -63,7 +87,7 @@ static inline int has_totp_set(const struct opsick_client_user_context* ctx)
         if (ctx->totp[i] != 0x00)
             return 1;
     }
-    return 0;
+    return OPSICK_CLIENT_SUCCESS;
 }
 
 static inline int has_private_ed25519_key(const struct opsick_client_user_context* ctx)
@@ -73,7 +97,7 @@ static inline int has_private_ed25519_key(const struct opsick_client_user_contex
         if (ctx->user_private_ed25519_key[i] != 0x00)
             return 1;
     }
-    return 0;
+    return OPSICK_CLIENT_SUCCESS;
 }
 
 static inline int has_private_curve448_key(const struct opsick_client_user_context* ctx)
@@ -83,7 +107,7 @@ static inline int has_private_curve448_key(const struct opsick_client_user_conte
         if (ctx->user_private_curve448_key[i] != 0x00)
             return 1;
     }
-    return 0;
+    return OPSICK_CLIENT_SUCCESS;
 }
 
 static inline int has_private_keys(const struct opsick_client_user_context* ctx)
@@ -170,19 +194,19 @@ static int is_valid_server_sig(const struct opsick_client_user_context* ctx, con
 
     if (memcmp(sig_hex, Z256, sizeof(sig_hex)) == 0)
     {
-        return 0;
+        return OPSICK_CLIENT_SUCCESS;
     }
 
     unsigned char sig[64 + 1];
     if (cecies_hexstr2bin(sig_hex, 128, sig, sizeof(sig), NULL) != 0)
     {
-        return 0;
+        return OPSICK_CLIENT_SUCCESS;
     }
 
     unsigned char pubkey[32 + 1];
     if (cecies_hexstr2bin(ctx->server_public_ed25519_key, 64, pubkey, sizeof(pubkey), NULL) != 0)
     {
-        return 0;
+        return OPSICK_CLIENT_SUCCESS;
     }
 
     return ed25519_verify(sig, (const unsigned char*)msg, msg_length, pubkey);
@@ -220,6 +244,9 @@ static inline void sha512(const char* msg, const size_t msg_length, char out_hex
 
 static inline int encrypt_sign_and_post(struct opsick_client_user_context* ctx, const char* request_body, const size_t request_body_length, struct glitchedhttps_response** out_response, char* url, const size_t url_length)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     int r = -1;
     char sig[128 + 1] = { 0x00 };
     uint8_t* encrypted_request_body = NULL;
@@ -268,6 +295,9 @@ exit:
 
 int opsick_client_test_connection(const char* server_url)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     int r = -1;
 
     const char* path = "/pubkey";
@@ -315,6 +345,9 @@ exit:
 
 int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -416,6 +449,9 @@ exit:
 
 int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -512,6 +548,9 @@ exit:
 
 int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json, size_t* out_body_json_length)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -649,6 +688,9 @@ exit:
 
 int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -779,6 +821,9 @@ exit:
 
 int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -905,6 +950,9 @@ exit:
 
 int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -957,6 +1005,9 @@ exit:
 
 int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256])
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -1039,6 +1090,9 @@ exit:
 
 int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json)
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;
@@ -1127,6 +1181,9 @@ exit:
 
 int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128])
 {
+    if (!initialized)
+        return OPSICK_CLIENT_UNINITIALIZED;
+
     assert(ctx != NULL);
 
     int r = -1;

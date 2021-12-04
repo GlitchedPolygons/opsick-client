@@ -57,6 +57,15 @@ extern "C" {
 #define OPSICK_CLIENT_VERSION_PATCH 4
 
 /**
+ * @brief An enumeration containing all possible return values that the opsick client library may use (starting from major version \c 2 upwards).
+ */
+enum opsick_client_return_code : int
+{
+    OPSICK_CLIENT_SUCCESS = 0,
+    OPSICK_CLIENT_UNINITIALIZED = 1
+};
+
+/**
  * Opsick user profile containing parameters for requests to the opsick server as well as the user's actual data fields.
  */
 struct opsick_client_user_context
@@ -142,6 +151,19 @@ struct opsick_client_user_context
      */
     time_t last_server_key_refresh;
 };
+
+/**
+ * Initializes the opsick client library, allocating all the required resources.
+ * @return Whether or not initialization failed. \c 0 means success; anything else is a failure.
+ */
+OPSICK_CLIENT_API int opsick_client_init();
+
+/**
+ * Frees the opsick client library, releasing all the allocated resources associated with it.
+ * \warning Absolutely make sure to <strong>ALWAYS</strong> call this only after there are absolutely <strong>NO MORE</strong> pending opsick client requests!
+ * Only call this once you're truly sure that you're done using the library!
+ */
+OPSICK_CLIENT_API void opsick_client_free();
 
 /**
  * Tests the connection to an opsick server.
