@@ -44,25 +44,78 @@ extern "C" {
 /**
  * Opsick client library version number (<strong>MAJOR</strong>).
  */
-#define OPSICK_CLIENT_VERSION_MAJOR 1
+#define OPSICK_CLIENT_VERSION_MAJOR 2
 
 /**
  * Opsick client library version number (<strong>MINOR</strong>).
  */
-#define OPSICK_CLIENT_VERSION_MINOR 1
+#define OPSICK_CLIENT_VERSION_MINOR 0
 
 /**
  * Opsick client library version number (<strong>PATCH</strong>).
  */
-#define OPSICK_CLIENT_VERSION_PATCH 4
+#define OPSICK_CLIENT_VERSION_PATCH 0
 
 /**
  * @brief An enumeration containing all possible return values that the opsick client library may use (starting from major version \c 2 upwards).
  */
 enum opsick_client_return_code : int
 {
+    /**
+     * Return code of a successful opsick client function execution.
+     */
     OPSICK_CLIENT_SUCCESS = 0,
-    OPSICK_CLIENT_UNINITIALIZED = 1
+
+    /**
+     * Return code for generic failures within the library.
+     */
+    OPSICK_CLIENT_FAILURE = 1,
+
+    /**
+     * This is returned when any invalid argument(s) were passed into an opsick client function.
+     */
+    OPSICK_CLIENT_INVALID_ARGS = 2,
+
+    /**
+     * Uh oh...
+     */
+    OPSICK_CLIENT_OUT_OF_MEMORY = 3,
+
+    /**
+     * This return code is returned if a function call was made without having called {@link #opsick_client_init} at least once.
+     */
+    OPSICK_CLIENT_UNINITIALIZED = 10,
+
+    /**
+     * This error code describes library initialization failures.
+     * \see {@link #opsick_client_init()}
+     */
+    OPSICK_CLIENT_INIT_FAILED = 11,
+
+    /**
+     * Returned when the used server URL is invalid.
+     */
+    OPSICK_CLIENT_INVALID_SERVER_URL = 20,
+
+    /**
+     * Returned when the used server URL is too long.
+     */
+    OPSICK_CLIENT_SERVER_URL_TOO_LONG = 21,
+
+    /**
+     * TODO
+     */
+    OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED = 22,
+    OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD = 23,
+    OPSICK_CLIENT_REQUEST_SUBMISSION_TO_SERVER_FAILED = 24,
+    OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT = 30,
+    OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE = 31,
+    OPSICK_CLIENT_KEY_REGEN_NOT_PERFORMED = 40,
+    OPSICK_CLIENT_MISSING_PRIVATE_KEYS = 50,
+    OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED = 60,
+    OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED = 61,
+    OPSICK_CLIENT_CECIES_ENCRYPTION_FAILED = 70,
+    OPSICK_CLIENT_CECIES_DECRYPTION_FAILED = 71,
 };
 
 /**
@@ -169,10 +222,12 @@ OPSICK_CLIENT_API void opsick_client_free();
  * Tests the connection to an opsick server.
  * @param server_url The opsick server base URL.
  * @return
- * * \p 0 on success <br>
- * * \p -1 in case of an invalid \p server_url (these require explicit \p http:// or \p https:// protocol prefix and <strong>NO trailing slashes</strong>!) <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -3 if the connection was OK but the server doesn't seem to be an opsick server...
+ * * \p OPSICK_CLIENT_SUCCESS on success <br>
+ * * \p OPSICK_CLIENT_INVALID_SERVER_URL in case of an invalid \p server_url (these require explicit \p http:// or \p https:// protocol prefix and <strong>NO trailing slashes</strong>!) <br>
+ * * \p OPSICK_CLIENT_SERVER_URL_TOO_LONG in case the \p server_url exceeds the maximum allowed number of characters. <br>
+ * * \p OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED if connection couldn't be established successfully. <br>
+ * * \p OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD if the connection to the URL was OK but the server is... weird... it kinda doesn't seem to be an opsick server... <br>
+ * * (if none of the above {@link #opsick_client_return_code} return codes are returned, the HTTP response status code is returned)
  */
 OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
 

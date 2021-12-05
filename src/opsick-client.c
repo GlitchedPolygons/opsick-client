@@ -17,12 +17,12 @@
 #include "../include/opsick/opsick-client.h"
 #include "jsmn.h"
 
+#include "ed25519.h"
 #include "pwcrypt.h"
 #include "cecies/util.h"
 #include "cecies/keygen.h"
 #include "cecies/encrypt.h"
 #include "cecies/decrypt.h"
-#include "ed25519.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -46,11 +46,15 @@ static int initialized = 0;
 int opsick_client_init()
 {
     if (initialized)
+    {
         return OPSICK_CLIENT_SUCCESS;
+    }
 
     const int r = glitchedhttps_init();
     if (r != 0)
-        return -1;
+    {
+        return OPSICK_CLIENT_INIT_FAILED;
+    }
 
     initialized = 1;
     return OPSICK_CLIENT_SUCCESS;
@@ -59,7 +63,9 @@ int opsick_client_init()
 void opsick_client_free()
 {
     if (!initialized)
+    {
         return;
+    }
 
     glitchedhttps_free();
     initialized = 0;
@@ -87,7 +93,7 @@ static inline int has_totp_set(const struct opsick_client_user_context* ctx)
         if (ctx->totp[i] != 0x00)
             return 1;
     }
-    return OPSICK_CLIENT_SUCCESS;
+    return 0;
 }
 
 static inline int has_private_ed25519_key(const struct opsick_client_user_context* ctx)
@@ -97,7 +103,7 @@ static inline int has_private_ed25519_key(const struct opsick_client_user_contex
         if (ctx->user_private_ed25519_key[i] != 0x00)
             return 1;
     }
-    return OPSICK_CLIENT_SUCCESS;
+    return 0;
 }
 
 static inline int has_private_curve448_key(const struct opsick_client_user_context* ctx)
@@ -107,7 +113,7 @@ static inline int has_private_curve448_key(const struct opsick_client_user_conte
         if (ctx->user_private_curve448_key[i] != 0x00)
             return 1;
     }
-    return OPSICK_CLIENT_SUCCESS;
+    return 0;
 }
 
 static inline int has_private_keys(const struct opsick_client_user_context* ctx)
@@ -194,19 +200,19 @@ static int is_valid_server_sig(const struct opsick_client_user_context* ctx, con
 
     if (memcmp(sig_hex, Z256, sizeof(sig_hex)) == 0)
     {
-        return OPSICK_CLIENT_SUCCESS;
+        return 0;
     }
 
     unsigned char sig[64 + 1];
     if (cecies_hexstr2bin(sig_hex, 128, sig, sizeof(sig), NULL) != 0)
     {
-        return OPSICK_CLIENT_SUCCESS;
+        return 0;
     }
 
     unsigned char pubkey[32 + 1];
     if (cecies_hexstr2bin(ctx->server_public_ed25519_key, 64, pubkey, sizeof(pubkey), NULL) != 0)
     {
-        return OPSICK_CLIENT_SUCCESS;
+        return 0;
     }
 
     return ed25519_verify(sig, (const unsigned char*)msg, msg_length, pubkey);
@@ -226,7 +232,7 @@ static inline int refresh_server_keys(struct opsick_client_user_context* ctx, co
     {
         return opsick_client_get_server_public_keys(ctx);
     }
-    return -1;
+    return OPSICK_CLIENT_KEY_REGEN_NOT_PERFORMED;
 }
 
 static inline int jsoneq(const char* json, const jsmntok_t* token, const char* string, const int string_length)
@@ -245,7 +251,9 @@ static inline void sha512(const char* msg, const size_t msg_length, char out_hex
 static inline int encrypt_sign_and_post(struct opsick_client_user_context* ctx, const char* request_body, const size_t request_body_length, struct glitchedhttps_response** out_response, char* url, const size_t url_length)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     int r = -1;
     char sig[128 + 1] = { 0x00 };
@@ -258,7 +266,7 @@ static inline int encrypt_sign_and_post(struct opsick_client_user_context* ctx, 
     r = cecies_curve448_encrypt((const uint8_t*)request_body, request_body_length, 0, string2curve448key(ctx->server_public_curve448_key), &encrypted_request_body, &encrypted_request_body_length, 1);
     if (r != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_CECIES_ENCRYPTION_FAILED;
         goto exit;
     }
 
@@ -296,17 +304,22 @@ exit:
 int opsick_client_test_connection(const char* server_url)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
-
-    int r = -1;
+    }
 
     const char* path = "/pubkey";
     const size_t path_length = strlen(path);
 
     size_t server_url_length;
-    if (!is_valid_server_url(server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
     }
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
@@ -317,23 +330,23 @@ int opsick_client_test_connection(const char* server_url)
     request.method = GLITCHEDHTTPS_GET;
 
     struct glitchedhttps_response* response = NULL;
-    r = glitchedhttps_submit(&request, &response);
+    int r = glitchedhttps_submit(&request, &response);
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
+        r = OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED;
         goto exit;
     }
 
     if (!strstr(response->content, "\"public_key_ed25519\"") || !strstr(response->content, "\"public_key_curve448\""))
     {
-        r = -3;
+        r = OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD;
         goto exit;
     }
 
@@ -346,7 +359,9 @@ exit:
 int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -356,9 +371,14 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
     const size_t path_length = strlen(path);
 
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
     }
 
     jsmn_parser parser;
@@ -377,22 +397,22 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
+        r = OPSICK_CLIENT_REQUEST_SUBMISSION_TO_SERVER_FAILED;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
     jsmn_init(&parser);
-    const int64_t n = jsmn_parse(&parser, response->content, response->content_length, tokens, 8);
+    const int64_t n = jsmn_parse(&parser, response->content, (int64_t)response->content_length, tokens, 8);
 
     if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
-        r = -3;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
         goto exit;
     }
 
@@ -406,7 +426,7 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
             const int64_t len = t.end - t.start;
             if (len != 64) // Ensure valid Ed25519 key length!
             {
-                r = -3;
+                r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
                 goto exit;
             }
             memcpy(ctx->server_public_ed25519_key, response->content + t.start, len);
@@ -420,7 +440,7 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
             const int64_t len = t.end - t.start;
             if (len != 112) // Ensure valid Curve448 key length!
             {
-                r = -3;
+                r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
                 goto exit;
             }
             memcpy(ctx->server_public_curve448_key, response->content + t.start, len);
@@ -433,7 +453,7 @@ int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx)
 
     if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -450,7 +470,9 @@ exit:
 int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -462,9 +484,24 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     size_t new_pw_length;
     size_t server_url_length;
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || new_pw == NULL || (new_pw_length = strlen(new_pw)) == 0 || !has_private_keys(ctx) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (new_pw == NULL || (new_pw_length = strlen(new_pw)) == 0)
+    {
+        return OPSICK_CLIENT_INVALID_ARGS;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
+    }
+
+    if (!has_private_keys(ctx))
+    {
+        return OPSICK_CLIENT_MISSING_PRIVATE_KEYS;
     }
 
     uint8_t* encrypted_ed25519_private_key = NULL;
@@ -488,30 +525,28 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
     r = pwcrypt_encrypt((const uint8_t*)ctx->user_private_ed25519_key, 128, 8, (const uint8_t*)new_pw, new_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1);
     if (r != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED;
         goto exit;
     }
 
     r = pwcrypt_encrypt((const uint8_t*)ctx->user_private_curve448_key, 112, 8, (const uint8_t*)new_pw, new_pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_curve448_private_key, &encrypted_curve448_private_key_length, 1);
     if (r != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED;
         goto exit;
     }
 
     const int request_body_json_length = snprintf(request_body_json, sizeof(request_body_json), "{\"id\":%zu,\"pw\":\"%s\",\"new_pw\":\"%s\",\"encrypted_private_key_ed25519\":\"%s\",\"encrypted_private_key_curve448\":\"%s\",\"totp\":\"%s\"}", ctx->id, pw_sha512, new_pw_sha512, encrypted_ed25519_private_key, encrypted_curve448_private_key, has_totp_set(ctx) ? ctx->totp : "");
 
     r = encrypt_sign_and_post(ctx, request_body_json, request_body_json_length, &response, url, server_url_length + path_length);
-
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
@@ -520,7 +555,7 @@ int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char
 
     if (!is_valid_server_sig(ctx, new_pw_sha512, 128, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -549,7 +584,9 @@ exit:
 int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json, size_t* out_body_json_length)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -560,9 +597,19 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
     const char* path = "/users";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || out_body_json == NULL || out_body_json_length == NULL || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
+    }
+
+    if (out_body_json == NULL || out_body_json_length == NULL)
+    {
+        return OPSICK_CLIENT_INVALID_ARGS;
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
@@ -588,19 +635,18 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
     if (cecies_curve448_decrypt((const uint8_t*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), &decrypted_response_body_json, &decrypted_response_body_json_length) != 0)
     {
-        r = 2;
+        r = OPSICK_CLIENT_CECIES_DECRYPTION_FAILED;
         goto exit;
     }
 
@@ -608,7 +654,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 
     if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
-        r = -3;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
         goto exit;
     }
 
@@ -656,7 +702,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
             r = pwcrypt_decrypt((const uint8_t*)decrypted_response_body_json + t.start, t.end - t.start, (const uint8_t*)ctx->pw, pw_length, (uint8_t**)out_body_json, out_body_json_length);
             if (r != 0)
             {
-                r = 2;
+                r = OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED;
                 goto exit;
             }
             continue;
@@ -665,7 +711,7 @@ int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* b
 
     if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -689,7 +735,9 @@ exit:
 int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -700,9 +748,14 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
     const char* path = "/users/keys";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
@@ -725,21 +778,21 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
-    const int64_t n = jsmn_parse(&parser, response->content, response->content_length, tokens, 32);
+    // We'll just assume the response->content_length is < INT64_MAX to avoid yet another if statement: it's very unlikely to have such a huge response anyway..
+    const int64_t n = jsmn_parse(&parser, response->content, (int64_t)response->content_length, tokens, 32);
 
     if (n < 1 || tokens[0].type != JSMN_OBJECT)
     {
-        r = -3;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
         goto exit;
     }
 
@@ -758,12 +811,12 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
             size_t decrypted_key_length = 0;
             if (pwcrypt_decrypt((const uint8_t*)response->content + t.start, t.end - t.start, (const uint8_t*)ctx->pw, pw_length, &decrypted_key, &decrypted_key_length) != 0)
             {
-                r = 2;
+                r = OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED;
                 goto exit;
             }
             if (snprintf(ctx->user_private_ed25519_key, sizeof(ctx->user_private_ed25519_key), "%s", decrypted_key) != 128)
             {
-                r = -3;
+                r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
                 mbedtls_platform_zeroize(decrypted_key, decrypted_key_length);
                 free(decrypted_key);
                 goto exit;
@@ -785,12 +838,12 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
             size_t decrypted_key_length = 0;
             if (pwcrypt_decrypt((const uint8_t*)response->content + t.start, t.end - t.start, (const uint8_t*)ctx->pw, pw_length, &decrypted_key, &decrypted_key_length) != 0)
             {
-                r = 2;
+                r = OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED;
                 goto exit;
             }
             if (snprintf(ctx->user_private_curve448_key, sizeof(ctx->user_private_curve448_key), "%s", decrypted_key) != 112)
             {
-                r = -3;
+                r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
                 mbedtls_platform_zeroize(decrypted_key, decrypted_key_length);
                 free(decrypted_key);
                 goto exit;
@@ -803,7 +856,7 @@ int opsick_client_get_userkeys(struct opsick_client_user_context* ctx)
 
     if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -822,7 +875,9 @@ exit:
 int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -833,9 +888,19 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     size_t server_url_length;
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
+    }
+
+    if ((additional_entropy != NULL && additional_entropy_length == 0) || (additional_entropy_length != 0 && additional_entropy == NULL))
+    {
+        return OPSICK_CLIENT_INVALID_ARGS;
     }
 
     char url[OPSICK_CLIENT_MAX_URL_LENGTH] = { 0x00 };
@@ -880,13 +945,13 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     if (pwcrypt_encrypt((const uint8_t*)ed25519_private_hexstr, 128, 8, (const uint8_t*)ctx->pw, pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_ed25519_private_key, &encrypted_ed25519_private_key_length, 1) != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED;
         goto exit;
     }
 
     if (pwcrypt_encrypt((const uint8_t*)curve448_keypair.private_key.hexstring, 112, 8, (const uint8_t*)ctx->pw, pw_length, OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_curve448_private_key, &encrypted_curve448_private_key_length, 1) != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED;
         goto exit;
     }
 
@@ -896,13 +961,12 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
@@ -918,7 +982,7 @@ int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const v
 
     if (!is_valid_server_sig(ctx, pw_sha512, 128, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -951,7 +1015,9 @@ exit:
 int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -962,9 +1028,14 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
     const char* path = "/users/delete";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
@@ -983,13 +1054,12 @@ int opsick_client_post_userdel(struct opsick_client_user_context* ctx)
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
@@ -1006,7 +1076,9 @@ exit:
 int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256])
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -1017,9 +1089,19 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
     const char* path = "/users/2fa";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || (action == 1 && out_json == NULL) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
+    }
+
+    if ((action == 1 && out_json == NULL))
+    {
+        return OPSICK_CLIENT_INVALID_ARGS;
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
@@ -1040,13 +1122,12 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
@@ -1054,13 +1135,13 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
     {
         if (cecies_curve448_decrypt((const uint8_t*)response->content, response->content_length, 1, string2curve448key(ctx->user_private_curve448_key), &decrypted_response_body_json, &decrypted_response_body_json_length) != 0)
         {
-            r = 2;
+            r = OPSICK_CLIENT_CECIES_DECRYPTION_FAILED;
             goto exit;
         }
 
         if (decrypted_response_body_json_length > 256)
         {
-            r = -3;
+            r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT;
             goto exit;
         }
 
@@ -1069,7 +1150,7 @@ int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int actio
 
     if (!is_valid_server_sig(ctx, action == 1 ? response->content : pw_sha512, action == 1 ? response->content_length : 128, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -1091,7 +1172,9 @@ exit:
 int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json)
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -1103,9 +1186,19 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     const char* path = "/users/body";
     const size_t path_length = strlen(path);
 
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || body_json == NULL || (body_json_length = strlen(body_json)) == 0 || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
+    }
+
+    if (body_json == NULL || (body_json_length = strlen(body_json)) == 0)
+    {
+        return OPSICK_CLIENT_INVALID_ARGS;
     }
 
     char pw_sha512[128 + 1] = { 0x00 };
@@ -1125,7 +1218,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
     r = pwcrypt_encrypt((const uint8_t*)body_json, body_json_length, 8, (const uint8_t*)ctx->pw, strlen(ctx->pw), OPSICK_CLIENT_KEY_ARGON2_T, OPSICK_CLIENT_KEY_ARGON2_M, OPSICK_CLIENT_KEY_ARGON2_P, 1, &encrypted_body_json, &encrypted_body_json_length, 1);
     if (r != 0)
     {
-        r = 1;
+        r = OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED;
         goto exit;
     }
 
@@ -1134,7 +1227,7 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     if (request_body_json == NULL)
     {
-        r = 20;
+        r = OPSICK_CLIENT_OUT_OF_MEMORY;
         goto exit;
     }
 
@@ -1144,19 +1237,18 @@ int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const ch
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response ? response->status_code : -2;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
     if (!is_valid_server_sig(ctx, pw_sha512, 128, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 
@@ -1182,7 +1274,9 @@ exit:
 int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128])
 {
     if (!initialized)
+    {
         return OPSICK_CLIENT_UNINITIALIZED;
+    }
 
     assert(ctx != NULL);
 
@@ -1192,9 +1286,14 @@ int opsick_client_get_server_version(struct opsick_client_user_context* ctx, cha
     const size_t path_length = strlen(path);
 
     size_t server_url_length;
-    if (!is_valid_server_url(ctx->server_url, &server_url_length) || server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    if (!is_valid_server_url(ctx->server_url, &server_url_length))
     {
-        return r;
+        return OPSICK_CLIENT_INVALID_SERVER_URL;
+    }
+
+    if (server_url_length + path_length > OPSICK_CLIENT_MAX_URL_LENGTH)
+    {
+        return OPSICK_CLIENT_SERVER_URL_TOO_LONG;
     }
 
     refresh_server_keys(ctx, 0);
@@ -1213,13 +1312,12 @@ int opsick_client_get_server_version(struct opsick_client_user_context* ctx, cha
 
     if (r != GLITCHEDHTTPS_SUCCESS)
     {
-        r = -2;
         goto exit;
     }
 
     if (!is_successful(response))
     {
-        r = response->status_code;
+        r = response ? response->status_code : OPSICK_CLIENT_FAILURE;
         goto exit;
     }
 
@@ -1227,7 +1325,7 @@ int opsick_client_get_server_version(struct opsick_client_user_context* ctx, cha
 
     if (!is_valid_server_sig(ctx, response->content, response->content_length, response))
     {
-        r = -10;
+        r = OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE;
         goto exit;
     }
 

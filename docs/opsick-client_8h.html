@@ -70,6 +70,7 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">opsick-client.h File Reference</div></div>
 </div><!--header-->
@@ -104,15 +105,50 @@ Macros</h2></td></tr>
 <tr class="memitem:ad9cd7ca446aa6cb1d28a9b9a649d239c"><td class="memItemLeft" align="right" valign="top"><a id="ad9cd7ca446aa6cb1d28a9b9a649d239c" name="ad9cd7ca446aa6cb1d28a9b9a649d239c"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>OPSICK_CLIENT_API</b></td></tr>
 <tr class="separator:ad9cd7ca446aa6cb1d28a9b9a649d239c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcb30f3f7af87e8d7fd1971d48b3392a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#adcb30f3f7af87e8d7fd1971d48b3392a">OPSICK_CLIENT_VERSION_MAJOR</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memitem:adcb30f3f7af87e8d7fd1971d48b3392a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#adcb30f3f7af87e8d7fd1971d48b3392a">OPSICK_CLIENT_VERSION_MAJOR</a>&#160;&#160;&#160;2</td></tr>
 <tr class="separator:adcb30f3f7af87e8d7fd1971d48b3392a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf5f99c9486b2154b9f579f0115bdb05"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#adf5f99c9486b2154b9f579f0115bdb05">OPSICK_CLIENT_VERSION_MINOR</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memitem:adf5f99c9486b2154b9f579f0115bdb05"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#adf5f99c9486b2154b9f579f0115bdb05">OPSICK_CLIENT_VERSION_MINOR</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:adf5f99c9486b2154b9f579f0115bdb05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a250ff624044dc42d9463a5d98df37876"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a250ff624044dc42d9463a5d98df37876">OPSICK_CLIENT_VERSION_PATCH</a>&#160;&#160;&#160;3</td></tr>
+<tr class="memitem:a250ff624044dc42d9463a5d98df37876"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a250ff624044dc42d9463a5d98df37876">OPSICK_CLIENT_VERSION_PATCH</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:a250ff624044dc42d9463a5d98df37876"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a6f5a7a664f39248d7ab1ad5e86b1b20e"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20e">opsick_client_return_code</a> : int { <br />
+&#160;&#160;<a class="el" href="opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20ea4761e1b2eb632c8f73759b3692ffb61b">OPSICK_CLIENT_SUCCESS</a> = 0
+, <b>OPSICK_CLIENT_FAILURE</b> = 1
+, <b>OPSICK_CLIENT_INVALID_ARGS</b> = 2
+, <b>OPSICK_CLIENT_OUT_OF_MEMORY</b> = 3
+, <br />
+&#160;&#160;<b>OPSICK_CLIENT_UNINITIALIZED</b> = 10
+, <b>OPSICK_CLIENT_INIT_FAILED</b> = 11
+, <b>OPSICK_CLIENT_INVALID_SERVER_URL</b> = 20
+, <b>OPSICK_CLIENT_SERVER_URL_TOO_LONG</b> = 21
+, <br />
+&#160;&#160;<b>OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED</b> = 22
+, <b>OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD</b> = 23
+, <b>OPSICK_CLIENT_REQUEST_SUBMISSION_TO_SERVER_FAILED</b> = 24
+, <b>OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT</b> = 30
+, <br />
+&#160;&#160;<b>OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE</b> = 31
+, <b>OPSICK_CLIENT_KEY_REGEN_NOT_PERFORMED</b> = 40
+, <b>OPSICK_CLIENT_MISSING_PRIVATE_KEYS</b> = 50
+, <b>OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED</b> = 60
+, <br />
+&#160;&#160;<b>OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED</b> = 61
+, <b>OPSICK_CLIENT_CECIES_ENCRYPTION_FAILED</b> = 70
+, <b>OPSICK_CLIENT_CECIES_DECRYPTION_FAILED</b> = 71
+<br />
+ }</td></tr>
+<tr class="memdesc:a6f5a7a664f39248d7ab1ad5e86b1b20e"><td class="mdescLeft">&#160;</td><td class="mdescRight">An enumeration containing all possible return values that the opsick client library may use (starting from major version <code>2</code> upwards).  <a href="opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20e">More...</a><br /></td></tr>
+<tr class="separator:a6f5a7a664f39248d7ab1ad5e86b1b20e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a59f9c2b1cf495b888de9e2ddffe50933"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#a59f9c2b1cf495b888de9e2ddffe50933">opsick_client_init</a> ()</td></tr>
+<tr class="separator:a59f9c2b1cf495b888de9e2ddffe50933"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae27eacd5f9a419f42bf3652697b1b7b8"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ae27eacd5f9a419f42bf3652697b1b7b8">opsick_client_free</a> ()</td></tr>
+<tr class="separator:ae27eacd5f9a419f42bf3652697b1b7b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2c7dbc681ed25a9332d496c24128475"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#ae2c7dbc681ed25a9332d496c24128475">opsick_client_test_connection</a> (const char *server_url)</td></tr>
 <tr class="separator:ae2c7dbc681ed25a9332d496c24128475"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec9b37e412dd09b0c8c4dbcd540b84d6"><td class="memItemLeft" align="right" valign="top">OPSICK_CLIENT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="opsick-client_8h.html#aec9b37e412dd09b0c8c4dbcd540b84d6">opsick_client_get_server_public_keys</a> (struct <a class="el" href="structopsick__client__user__context.html">opsick_client_user_context</a> *ctx)</td></tr>
@@ -147,7 +183,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define OPSICK_CLIENT_VERSION_MAJOR&#160;&#160;&#160;1</td>
+          <td class="memname">#define OPSICK_CLIENT_VERSION_MAJOR&#160;&#160;&#160;2</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -162,7 +198,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define OPSICK_CLIENT_VERSION_MINOR&#160;&#160;&#160;1</td>
+          <td class="memname">#define OPSICK_CLIENT_VERSION_MINOR&#160;&#160;&#160;0</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -177,7 +213,7 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define OPSICK_CLIENT_VERSION_PATCH&#160;&#160;&#160;3</td>
+          <td class="memname">#define OPSICK_CLIENT_VERSION_PATCH&#160;&#160;&#160;0</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -185,7 +221,46 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a6f5a7a664f39248d7ab1ad5e86b1b20e" name="a6f5a7a664f39248d7ab1ad5e86b1b20e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f5a7a664f39248d7ab1ad5e86b1b20e">&#9670;&nbsp;</a></span>opsick_client_return_code</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20e">opsick_client_return_code</a> : int</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>An enumeration containing all possible return values that the opsick client library may use (starting from major version <code>2</code> upwards). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6f5a7a664f39248d7ab1ad5e86b1b20ea4761e1b2eb632c8f73759b3692ffb61b" name="a6f5a7a664f39248d7ab1ad5e86b1b20ea4761e1b2eb632c8f73759b3692ffb61b"></a>OPSICK_CLIENT_SUCCESS&#160;</td><td class="fielddoc"><p >Return code of a successful opsick client function execution. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="ae27eacd5f9a419f42bf3652697b1b7b8" name="ae27eacd5f9a419f42bf3652697b1b7b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae27eacd5f9a419f42bf3652697b1b7b8">&#9670;&nbsp;</a></span>opsick_client_free()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">OPSICK_CLIENT_API void opsick_client_free </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Frees the opsick client library, releasing all the allocated resources associated with it. </p><dl class="section warning"><dt>Warning</dt><dd>Absolutely make sure to <b>ALWAYS</b> call this only after there are absolutely <b>NO MORE</b> pending opsick client requests! Only call this once you're truly sure that you're done using the library! </dd></dl>
+
+</div>
+</div>
 <a id="a80c4a0a86863f26b62a04a9ac67bf063" name="a80c4a0a86863f26b62a04a9ac67bf063"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a80c4a0a86863f26b62a04a9ac67bf063">&#9670;&nbsp;</a></span>opsick_client_get_client_version()</h2>
 
@@ -438,6 +513,24 @@ Functions</h2></td></tr>
 <li>The returned HTTP status code representing the error in case of a failure. </li>
 </ul>
 </dd></dl>
+
+</div>
+</div>
+<a id="a59f9c2b1cf495b888de9e2ddffe50933" name="a59f9c2b1cf495b888de9e2ddffe50933"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59f9c2b1cf495b888de9e2ddffe50933">&#9670;&nbsp;</a></span>opsick_client_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">OPSICK_CLIENT_API int opsick_client_init </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Initializes the opsick client library, allocating all the required resources. </p><dl class="section return"><dt>Returns</dt><dd>Whether or not initialization failed. <code>0</code> means success; anything else is a failure. </dd></dl>
 
 </div>
 </div>
@@ -781,13 +874,17 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><ul>
-<li><code>0</code> on success <br  />
+<li><code>OPSICK_CLIENT_SUCCESS</code> on success <br  />
 </li>
-<li><code>-1</code> in case of an invalid <code>server_url</code> (these require explicit <code><a href="http://">http://</a></code> or <code><a href="https://">https://</a></code> protocol prefix and <b>NO trailing slashes</b>!) <br  />
+<li><code>OPSICK_CLIENT_INVALID_SERVER_URL</code> in case of an invalid <code>server_url</code> (these require explicit <code><a href="http://">http://</a></code> or <code><a href="https://">https://</a></code> protocol prefix and <b>NO trailing slashes</b>!) <br  />
 </li>
-<li><code>-2</code> if connection couldn't be established successfully. <br  />
+<li><code>OPSICK_CLIENT_SERVER_URL_TOO_LONG</code> in case the <code>server_url</code> exceeds the maximum allowed number of characters. <br  />
 </li>
-<li><code>-3</code> if the connection was OK but the server doesn't seem to be an opsick server... </li>
+<li><code>OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED</code> if connection couldn't be established successfully. <br  />
+</li>
+<li><code>OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD</code> if the connection to the URL was OK but the server is... weird... it kinda doesn't seem to be an opsick server... <br  />
+</li>
+<li>(if none of the above <a class="el" href="opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20e">opsick_client_return_code</a> return codes are returned, the HTTP response status code is returned) </li>
 </ul>
 </dd></dl>
 
