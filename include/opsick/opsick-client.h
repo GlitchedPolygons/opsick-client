@@ -43,13 +43,18 @@ extern "C" {
 
 /**
  * @mainpage Opsick Client Library - API Documentation
- * @section intro Introduction
- * TODO: document this!
+ * <h2>Welcome to the API docs for the Opsick client library.</h2>
+ * <h3>This C library can be used to make requests to Opsick servers.</h3>
  * @section install Installation
  * See the git repository's [README.md](https://github.com/GlitchedPolygons/opsick-client) for instructions on how to get started with this.
  * @section usage Usage
- * TODO: write this section here!
- * <p> Also: check out the {@link #opsick_client_return_code} enum to find out what each of the functions' exit codes means!
+ * The library has an init and a free function to allocate the necessary resources, and a user context struct for containing the user's metadata and keys to use for making requests.
+ * <br>
+ * Functions in this library take this user context struct ({@link #opsick_client_user_context}) to perform requests to the desired Opsick server URL.
+ * <br>
+ * Check out the {@link #opsick_client_return_code} enum to find out what each of the functions' exit codes means!
+ * <br>
+ * For more details, check out the \c opsick_client.h header file documentation here: https://glitchedpolygons.github.io/opsick-client/opsick-client_8h.html
  */
 
 /**
