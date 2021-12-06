@@ -1,4 +1,22 @@
 var searchData=
 [
-  ['opsick_5fclient_5fsuccess_0',['OPSICK_CLIENT_SUCCESS',['../opsick-client_8h.html#a6f5a7a664f39248d7ab1ad5e86b1b20ea4761e1b2eb632c8f73759b3692ffb61b',1,'opsick-client.h']]]
+  ['opsick_5fclient_5fcecies_5fdecryption_5ffailed_0',['OPSICK_CLIENT_CECIES_DECRYPTION_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81aea8115a229d91508cd611c95edc119df',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fcecies_5fencryption_5ffailed_1',['OPSICK_CLIENT_CECIES_ENCRYPTION_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81aef1a3cb5ae6253d529e4a2d3d6a91162',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fconnection_5fto_5fserver_5ffailed_2',['OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a613098be77b405e75fba6f941bb7cbfd',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fconnection_5fto_5fserver_5fweird_3',['OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81ae9ec8a3ece87b0c5ca0092d4dd07ec13',1,'opsick-client.h']]],
+  ['opsick_5fclient_5ffailure_4',['OPSICK_CLIENT_FAILURE',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81ae8af6f22cf5db69680a310750cbc8170',1,'opsick-client.h']]],
+  ['opsick_5fclient_5finit_5ffailed_5',['OPSICK_CLIENT_INIT_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a019cecb9c7a6b1b3da3dd1d103fd842a',1,'opsick-client.h']]],
+  ['opsick_5fclient_5finvalid_5fargs_6',['OPSICK_CLIENT_INVALID_ARGS',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a7c0a5536cedfdde184699c5257421a0d',1,'opsick-client.h']]],
+  ['opsick_5fclient_5finvalid_5fserver_5fresponse_5fformat_7',['OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a39f3506db7f32bd4bfe5c71a09405d53',1,'opsick-client.h']]],
+  ['opsick_5fclient_5finvalid_5fserver_5fresponse_5fsignature_8',['OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a747a47facdd2d366e482fe44c6c9fb48',1,'opsick-client.h']]],
+  ['opsick_5fclient_5finvalid_5fserver_5furl_9',['OPSICK_CLIENT_INVALID_SERVER_URL',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81aa6d9a43d942ca55d5fb9a9c2733a0439',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fkey_5fregen_5fnot_5fperformed_10',['OPSICK_CLIENT_KEY_REGEN_NOT_PERFORMED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a2154a290bdb86b720483fd2640d676a0',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fmissing_5fprivate_5fkeys_11',['OPSICK_CLIENT_MISSING_PRIVATE_KEYS',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81ab41fc4b4c1fc1f2107923566cf23979f',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fout_5fof_5fmemory_12',['OPSICK_CLIENT_OUT_OF_MEMORY',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81aa6ca93bcc82f16f59efb1d6b93135b6b',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fpwcrypt_5fdecryption_5ffailed_13',['OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a20b8b4689263a2b76130468efa83cfba',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fpwcrypt_5fencryption_5ffailed_14',['OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a1789941897f19e3d27f725603e9354c6',1,'opsick-client.h']]],
+  ['opsick_5fclient_5frequest_5fsubmission_5fto_5fserver_5ffailed_15',['OPSICK_CLIENT_REQUEST_SUBMISSION_TO_SERVER_FAILED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81aef5ec371b838f772bdb34bafb4e82b0b',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fserver_5furl_5ftoo_5flong_16',['OPSICK_CLIENT_SERVER_URL_TOO_LONG',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81ad2c47e999c7eb0d24d8b03c6bdd27c2e',1,'opsick-client.h']]],
+  ['opsick_5fclient_5fsuccess_17',['OPSICK_CLIENT_SUCCESS',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a4761e1b2eb632c8f73759b3692ffb61b',1,'opsick-client.h']]],
+  ['opsick_5fclient_5funinitialized_18',['OPSICK_CLIENT_UNINITIALIZED',['../opsick-client_8h.html#a1a7a969ef6212b6c6cbae5519f2aec81a4435ff184dbbb4348792755b91e10c44',1,'opsick-client.h']]]
 ];

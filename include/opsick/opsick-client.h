@@ -42,6 +42,17 @@ extern "C" {
  */
 
 /**
+ * @mainpage Opsick Client Library - API Documentation
+ * @section intro Introduction
+ * TODO: document this!
+ * @section install Installation
+ * See the git repository's [README.md](https://github.com/GlitchedPolygons/opsick-client) for instructions on how to get started with this.
+ * @section usage Usage
+ * TODO: write this section here!
+ * <p> Also: check out the {@link #opsick_client_return_code} enum to find out what each of the functions' exit codes means!
+ */
+
+/**
  * Opsick client library version number (<strong>MAJOR</strong>).
  */
 #define OPSICK_CLIENT_VERSION_MAJOR 2
@@ -59,7 +70,7 @@ extern "C" {
 /**
  * @brief An enumeration containing all possible return values that the opsick client library may use (starting from major version \c 2 upwards).
  */
-enum opsick_client_return_code : int
+enum opsick_client_return_code
 {
     /**
      * Return code of a successful opsick client function execution.
@@ -82,7 +93,7 @@ enum opsick_client_return_code : int
     OPSICK_CLIENT_OUT_OF_MEMORY = 3,
 
     /**
-     * This return code is returned if a function call was made without having called {@link #opsick_client_init} at least once.
+     * This return code is returned if a function call was made without having called {@link #opsick_client_init()} at least once.
      */
     OPSICK_CLIENT_UNINITIALIZED = 10,
 
@@ -103,18 +114,58 @@ enum opsick_client_return_code : int
     OPSICK_CLIENT_SERVER_URL_TOO_LONG = 21,
 
     /**
-     * TODO
+     * This error code describes a failure to connect to the established opsick URL.
      */
     OPSICK_CLIENT_CONNECTION_TO_SERVER_FAILED = 22,
+
+    /**
+     * Returned if things got weird.... (connection to the server OK but server doesn't seem to be an Opsick server).
+     */
     OPSICK_CLIENT_CONNECTION_TO_SERVER_WEIRD = 23,
+
+    /**
+     * Error code for when submission of the HTTP request to the Opsick server failed.
+     */
     OPSICK_CLIENT_REQUEST_SUBMISSION_TO_SERVER_FAILED = 24,
+
+    /**
+     * Returned if the server's response was not in a valid format.
+     */
     OPSICK_CLIENT_INVALID_SERVER_RESPONSE_FORMAT = 30,
+
+    /**
+     * Returned if the server's signature couldn't be verified against its response (uh oh...)
+     */
     OPSICK_CLIENT_INVALID_SERVER_RESPONSE_SIGNATURE = 31,
+
+    /**
+     * Manual key regeneration not performed due to either failure or not being necessary yet.
+     */
     OPSICK_CLIENT_KEY_REGEN_NOT_PERFORMED = 40,
+
+    /**
+     * Operation failed due to the used opsick_client_user_context not containing private keys.
+     */
     OPSICK_CLIENT_MISSING_PRIVATE_KEYS = 50,
+
+    /**
+     * This error code is returned when symmetric encryption using pwcrypt failed.
+     */
     OPSICK_CLIENT_PWCRYPT_ENCRYPTION_FAILED = 60,
+
+    /**
+     * Symmetric decryption using pwcrypt failed (e.g. wrong password).
+     */
     OPSICK_CLIENT_PWCRYPT_DECRYPTION_FAILED = 61,
+
+    /**
+     * Error code for when the asymmetric encryption of the message for the server failed.
+     */
     OPSICK_CLIENT_CECIES_ENCRYPTION_FAILED = 70,
+
+    /**
+     * This is returned if asymmetric decryption of the server's response failed.
+     */
     OPSICK_CLIENT_CECIES_DECRYPTION_FAILED = 71,
 };
 
@@ -215,8 +266,9 @@ OPSICK_CLIENT_API int opsick_client_init();
  * Frees the opsick client library, releasing all the allocated resources associated with it.
  * \warning Absolutely make sure to <strong>ALWAYS</strong> call this only after there are absolutely <strong>NO MORE</strong> pending opsick client requests!
  * Only call this once you're truly sure that you're done using the library!
+ * @return \c 0
  */
-OPSICK_CLIENT_API void opsick_client_free();
+OPSICK_CLIENT_API int opsick_client_free();
 
 /**
  * Tests the connection to an opsick server.
@@ -236,12 +288,7 @@ OPSICK_CLIENT_API int opsick_client_test_connection(const char* server_url);
  * @param ctx Required fields inside the #opsick_client_user_context struct: <br>
  * * server_url: #opsick_client_user_context.server_url
  * @return
- * * \p 0 on success <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -3 if the returned response couldn't be parsed and/or contains invalid data. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_user_context* ctx);
 
@@ -257,13 +304,7 @@ OPSICK_CLIENT_API int opsick_client_get_server_public_keys(struct opsick_client_
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @param new_pw The new user password.
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p 20 if out of memory (uh oh...) <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_context* ctx, const char* new_pw);
 
@@ -283,15 +324,7 @@ OPSICK_CLIENT_API int opsick_client_post_passwd(struct opsick_client_user_contex
  * @param out_body_json Output string where the downloaded user body will be written into (this will be allocated if there was a newer body upstream, or set to \p NULL if the local one is already the most recent one).
  * @param out_body_json_length Where to write the decrypted output user body json's string length into.
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p 2 if decryption failed <br>
- * * \p 20 if out of memory (uh oh...) <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -3 if the response couldn't be parsed/contained invalid data. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* ctx, const char* body_sha512, char** out_body_json, size_t* out_body_json_length);
 
@@ -305,14 +338,7 @@ OPSICK_CLIENT_API int opsick_client_get_user(struct opsick_client_user_context* 
  * * totp: #opsick_client_user_context.totp (if user has 2FA enabled).
  * * pw: #opsick_client_user_context.pw
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p 2 if decryption failed <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -3 if one or more returned keys is of invalid length. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_context* ctx);
 
@@ -329,12 +355,7 @@ OPSICK_CLIENT_API int opsick_client_get_userkeys(struct opsick_client_user_conte
  * @param additional_entropy [OPTIONAL] Additional entropy to use for key generation. Pass \p NULL if you want to omit this parameter!
  * @param additional_entropy_length [OPTIONAL] Length of the passed \p additional_entropy buffer (ignored if \p additional_entropy is <c>NULL</c>).
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_context* ctx, const void* additional_entropy, size_t additional_entropy_length);
 
@@ -349,12 +370,7 @@ OPSICK_CLIENT_API int opsick_client_regen_userkeys(struct opsick_client_user_con
  * * pw: #opsick_client_user_context.pw
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_context* ctx);
 
@@ -373,13 +389,7 @@ OPSICK_CLIENT_API int opsick_client_post_userdel(struct opsick_client_user_conte
  * @param out_json Where to write any output json into (must be at least 256 bytes of writable \p char buffer). <br>
  * This will only be touched if \p action is \p 1 (it will contain the generated user 2FA secret and other useful metadata to display to the user <strong>ONCE</strong>).
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -3 if the response couldn't be parsed/contained invalid data. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_context* ctx, int action, char out_json[256]);
 
@@ -395,13 +405,7 @@ OPSICK_CLIENT_API int opsick_client_post_user2fa(struct opsick_client_user_conte
  * * user_private_ed25519_key: #opsick_client_user_context.user_private_ed25519_key
  * @param body_json The new body json to encrypt using the user's password and submit to the opsick backend.
  * @return
- * * \p 0 on success <br>
- * * \p 1 if encryption failed <br>
- * * \p 20 if out of memory (uh oh...) <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_post_userbody(struct opsick_client_user_context* ctx, const char* body_json);
 
@@ -411,11 +415,7 @@ OPSICK_CLIENT_API int opsick_client_post_userbody(struct opsick_client_user_cont
  * * server_url: #opsick_client_user_context.server_url <br>
  * @param out_json Where to write the fetched server version metadata json into (must be at least 128 bytes of writable \p char buffer).
  * @return
- * * \p 0 on success <br>
- * * \p -1 if invalid arguments were used (e.g. something bad inside the client user context struct or the additional function arguments). <br>
- * * \p -2 if connection couldn't be established successfully. <br>
- * * \p -10 if the server's response signature couldn't be verified. <br>
- * * The returned HTTP status code representing the error in case of a failure.
+ * * {@link #opsick_client_return_code} or the returned HTTP status code representing the error (in case of a failure that is not mapped to the return code enum).
  */
 OPSICK_CLIENT_API int opsick_client_get_server_version(struct opsick_client_user_context* ctx, char out_json[128]);
 

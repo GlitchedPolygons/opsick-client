@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['opsick_5fclient_5ffree_0',['opsick_client_free',['../opsick-client_8h.html#ae27eacd5f9a419f42bf3652697b1b7b8',1,'opsick-client.h']]],
+  ['opsick_5fclient_5ffree_0',['opsick_client_free',['../opsick-client_8h.html#aa8ee86e28b4c18d7f4b101ffcb6341c5',1,'opsick-client.h']]],
   ['opsick_5fclient_5fget_5fclient_5fversion_1',['opsick_client_get_client_version',['../opsick-client_8h.html#a80c4a0a86863f26b62a04a9ac67bf063',1,'opsick-client.h']]],
   ['opsick_5fclient_5fget_5fserver_5fpublic_5fkeys_2',['opsick_client_get_server_public_keys',['../opsick-client_8h.html#aec9b37e412dd09b0c8c4dbcd540b84d6',1,'opsick-client.h']]],
   ['opsick_5fclient_5fget_5fserver_5fversion_3',['opsick_client_get_server_version',['../opsick-client_8h.html#a32bf6305968affb23e2b887144ae5e23',1,'opsick-client.h']]],
